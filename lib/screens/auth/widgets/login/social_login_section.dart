@@ -3,7 +3,12 @@ import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 
 class SocialLoginSection extends StatelessWidget {
-  const SocialLoginSection({super.key});
+  final VoidCallback onRegister;
+
+  const SocialLoginSection({
+    super.key, 
+    required this.onRegister,
+});
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 class AppBottomNav extends StatelessWidget {
@@ -32,76 +34,27 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(
-        top: 4,
-        bottom: 8,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.95),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(
-            _items.length,
-            (index) {
-              final item = _items[index];
-              final isSelected = currentIndex == index;
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onTap(index),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    height: 56,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primaryLight.withValues(alpha: 0.7)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          item.icon,
-                          size: 24,
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.onSurfaceVariant,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item.label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.onSurfaceVariant,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        child: GlassTabBar.bottom(
+          tabs: _items.map((item) {
+            return GlassTab(
+              icon: Icon(
+                item.icon,
+                color: AppColors.onSurfaceVariant,
+              ),
+              activeIcon: Icon(
+                item.icon,
+                color: AppColors.primary,
+              ),
+              label: item.label,
+              glowColor: AppColors.primary,
+            );
+          }).toList(),
+          selectedIndex: currentIndex,
+          onTabSelected: onTap,
         ),
       ),
     );

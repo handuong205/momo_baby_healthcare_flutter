@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/models/auth/login_response.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
-import 'package:momo_baby_healthcare_flutter/screens/home_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
 import 'package:momo_baby_healthcare_flutter/services/token_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -71,7 +71,7 @@ class _SplashScreenState
       context,
       MaterialPageRoute(
         builder: (_) => HomeScreen(
-          loginResult: result,
+         
         ),
       ),
     );
