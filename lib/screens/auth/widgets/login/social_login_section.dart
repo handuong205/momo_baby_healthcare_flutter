@@ -89,9 +89,7 @@ class SocialLoginSection extends StatelessWidget {
             ),
 
             TextButton(
-              onPressed: () {
-                // TODO: Navigate RegisterScreen
-              },
+              onPressed: onRegister,       
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.only(left: 6),
                 minimumSize: Size.zero,

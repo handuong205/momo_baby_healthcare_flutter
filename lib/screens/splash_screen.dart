@@ -1,54 +1,44 @@
 import 'package:flutter/material.dart';
 
-import 'package:momo_baby_healthcare_flutter/models/auth/login_response.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
-import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
 import 'package:momo_baby_healthcare_flutter/services/token_service.dart';
+import 'package:momo_baby_healthcare_flutter/shared/widgets/app_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() =>
-      _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState
-    extends State<SplashScreen> {
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     _checkAuthentication();
   }
 
   Future<void> _checkAuthentication() async {
     try {
-      final refreshToken =
-          await TokenService.getRefreshToken();
+      final refreshToken = await TokenService.getRefreshToken();
 
-      // Không có refresh token
-      // => chưa đăng nhập
-      if (refreshToken == null ||
-          refreshToken.isEmpty) {
+      // Chưa đăng nhập
+      if (refreshToken == null || refreshToken.isEmpty) {
         _goToLogin();
         return;
       }
 
-      // Có refresh token
-      // => gọi backend để lấy token mới
-      final result =
-          await AuthRepository.refreshToken();
+      // Có refresh token → refresh token
+      await AuthRepository.refreshToken();
 
-      // Refresh thành công
-      _goToHome(result);
+      // Refresh thành công → vào AppShell
+      _goToHome();
     } catch (e) {
-      // Refresh thất bại
-      // => xóa token và bắt đăng nhập lại
+      // Refresh thất bại → xóa token
       await TokenService.clearTokens();
 
+      // Quay lại Login
       _goToLogin();
     }
   }
@@ -64,15 +54,13 @@ class _SplashScreenState
     );
   }
 
-  void _goToHome(LoginResponse result) {
+  void _goToHome() {
     if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => HomeScreen(
-         
-        ),
+        builder: (_) => const AppShell(),
       ),
     );
   }

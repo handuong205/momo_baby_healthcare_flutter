@@ -53,15 +53,48 @@ class LoginScreen extends StatelessWidget {
                   const BiometricButton(),
                   const SizedBox(height: 20),
                   SocialLoginSection(
-                    onRegister: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RegisterScreen(),
-                        ),
-                      );
-                    },
-                  ),
+  onRegister: () {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+        ) {
+          return const RegisterScreen();
+        },
+        transitionDuration: const Duration(
+          milliseconds: 350,
+        ),
+        reverseTransitionDuration: const Duration(
+          milliseconds: 350,
+        ),
+        transitionsBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+        ) {
+          final slideAnimation = Tween<Offset>(
+            begin: const Offset(1.0, 0.0),
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ),
+          );
+
+          return SlideTransition(
+            position: slideAnimation,
+            child: child,
+          );
+        },
+      ),
+    );
+  },
+),
                   const SizedBox(height: 16),
                   _PrivacyBadge(),
                   const SizedBox(height: 16),

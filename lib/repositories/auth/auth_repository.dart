@@ -1,3 +1,5 @@
+import 'package:momo_baby_healthcare_flutter/models/auth/register_request.dart';
+
 import '/services/token_service.dart';
 import '/models/auth/login_request.dart';
 import '/models/auth/login_response.dart';
@@ -7,6 +9,25 @@ class AuthRepository {
   static Future<LoginResponse> login(LoginRequest request) async {
     final response = await ApiService.post(
       '/api/auth/login',
+      data: request.toJson(),
+      requiresAuth: false,
+    );
+
+    final data = response.data['data'];
+
+    final result = LoginResponse.fromJson(data as Map<String, dynamic>);
+
+    await TokenService.saveTokens(
+      token: result.token,
+      refreshToken: result.refreshToken,
+    );
+
+    return result;
+  }
+
+  static Future<LoginResponse> register(RegisterRequest request) async {
+    final response = await ApiService.post(
+      '/api/auth/register',
       data: request.toJson(),
       requiresAuth: false,
     );
