@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
-import 'package:momo_baby_healthcare_flutter/exceptions/api_exception.dart';
-import 'package:momo_baby_healthcare_flutter/models/auth/login_request.dart';
-import 'package:momo_baby_healthcare_flutter/models/auth/login_response.dart';
-import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
-import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/biometric_button.dart';
-import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login_form.dart';
-import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login_header.dart';
-import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/social_login_section.dart';
-import 'package:momo_baby_healthcare_flutter/screens/home_screen.dart';
-import 'package:momo_baby_healthcare_flutter/services/token_service.dart';
+import 'package:momo_baby_healthcare_flutter/screens/auth/register_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/biometric_button.dart';
+import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/login_form.dart';
+import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/login_header.dart';
+import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/social_login_section.dart';
+
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -56,7 +52,49 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   const BiometricButton(),
                   const SizedBox(height: 20),
-                  const SocialLoginSection(),
+                  SocialLoginSection(
+  onRegister: () {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+        ) {
+          return const RegisterScreen();
+        },
+        transitionDuration: const Duration(
+          milliseconds: 350,
+        ),
+        reverseTransitionDuration: const Duration(
+          milliseconds: 350,
+        ),
+        transitionsBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+        ) {
+          final slideAnimation = Tween<Offset>(
+            begin: const Offset(1.0, 0.0),
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ),
+          );
+
+          return SlideTransition(
+            position: slideAnimation,
+            child: child,
+          );
+        },
+      ),
+    );
+  },
+),
                   const SizedBox(height: 16),
                   _PrivacyBadge(),
                   const SizedBox(height: 16),

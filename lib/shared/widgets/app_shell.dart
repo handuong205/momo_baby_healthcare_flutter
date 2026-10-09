@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
 
 import 'app_header.dart';
 import 'app_bottom_nav.dart';
@@ -18,6 +19,7 @@ class _AppShellState extends State<AppShell> {
 
   final List<Widget> _screens = const [
     //here you can add your screens for each tab in the bottom navigation bar
+    HomeScreen(),
   ];
 
   @override
