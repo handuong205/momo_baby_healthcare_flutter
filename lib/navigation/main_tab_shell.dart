@@ -6,6 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/state/auth_controller.dart';
 import '../features/dashboard/data/dashboard_repository.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
+import '../features/tools/presentation/tools_screen.dart';
 
 class MainTabShell extends StatefulWidget {
   const MainTabShell({super.key, this.initialIndex = 0});
@@ -30,7 +31,7 @@ class _MainTabShellState extends State<MainTabShell> {
       const _PlaceholderTab(label: 'Lộ trình', icon: LucideIcons.heartPulse),
       const _PlaceholderTab(label: 'Bé yêu', icon: LucideIcons.baby),
       const _PlaceholderTab(label: 'AI', icon: LucideIcons.activity),
-      const _PlaceholderTab(label: 'Menu', icon: LucideIcons.grid3X3),
+      const ToolsScreen(),
     ];
     return Scaffold(
       body: pages[index],

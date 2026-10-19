@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
+import '../../care_schedule/services/care_reminder_service.dart';
 import '../data/auth_repository.dart';
 import '../models/user.dart';
 
@@ -66,6 +67,8 @@ class AuthController extends ChangeNotifier {
   Future<void> logout() async {
     await repository.logout();
     await repository.client.cancelActiveRequests();
+    // Không đổ chuông lịch của tài khoản cũ sau khi đăng xuất.
+    await CareReminderService.instance.cancelAll();
     user = null;
     error = null;
     notifyListeners();
@@ -74,6 +77,7 @@ class AuthController extends ChangeNotifier {
   Future<void> handleSessionExpired() async {
     await repository.storage.clearSession();
     await repository.client.cancelActiveRequests();
+    await CareReminderService.instance.cancelAll();
     user = null;
     error = 'Phiên đăng nhập đã hết hạn';
     notifyListeners();
