@@ -20,4 +20,6 @@ class ApiConfig {
   static String medicationById(Object id) => '/api/medications/$id';
   static String alertStatus(Object id) => '/api/alerts/$id/status';
   static const pregnancyWeightLog = '/api/pregnancy/weight-log';
+  static const lifestyleToday = '/api/lifestyle/today';
+  static const lifestyleEntry = '/api/lifestyle/entry';
 }

@@ -39,11 +39,29 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   String? locationError;
   bool locating = false;
   bool? reported;
+  bool sendingSignal = false;
+  List<EmergencyEvent>? events;
+  String? historyError;
 
   @override
   void initState() {
     super.initState();
     locate();
+    loadHistory();
+  }
+
+  Future<void> loadHistory() async {
+    try {
+      final list = await repository.history();
+      if (mounted) {
+        setState(() {
+          events = list;
+          historyError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => historyError = apiErrorMessage(e));
+    }
   }
 
   Future<void> locate() async {
@@ -158,17 +176,56 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     await _open(Uri(scheme: 'tel', path: '115'));
   }
 
-  Future<void> _report() async {
+  String get _nowHhmm {
     final now = TimeOfDay.now();
-    final hhmm =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    final where = _mapsLink == null ? '' : ' Vị trí: $_mapsLink';
+    return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  String get _where => _mapsLink == null ? '' : ' Vị trí: $_mapsLink';
+
+  Future<void> _report() async {
     try {
-      await repository.report('🚨 Mẹ đã gọi cấp cứu 115 lúc $hhmm.$where');
+      await repository.report('Mẹ đã gọi cấp cứu 115 lúc $_nowHhmm.$_where');
       if (mounted) setState(() => reported = true);
+      loadHistory();
     } catch (e) {
       debugPrint('Không ghi được sự kiện khẩn cấp: ${apiErrorMessage(e)}');
       if (mounted) setState(() => reported = false);
+    }
+  }
+
+  /// Gửi tín hiệu cần hỗ trợ lên backend để Care Staff liên hệ lại, khi mẹ
+  /// chưa gọi được 115 hoặc không nguy cấp tới mức phải gọi cấp cứu.
+  Future<void> sendSignal() async {
+    setState(() => sendingSignal = true);
+    try {
+      await repository.report(
+        'Mẹ cần hỗ trợ y tế, gửi tín hiệu lúc $_nowHhmm.$_where',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã gửi tín hiệu. Care Staff sẽ liên hệ mẹ sớm.'),
+        ),
+      );
+      await loadHistory();
+    } catch (e) {
+      if (mounted) {
+        await showMomAlert(context, 'Chưa gửi được', apiErrorMessage(e));
+      }
+    } finally {
+      if (mounted) setState(() => sendingSignal = false);
+    }
+  }
+
+  Future<void> resolve(EmergencyEvent event) async {
+    try {
+      await repository.resolve(event.id);
+      await loadHistory();
+    } catch (e) {
+      if (mounted) {
+        await showMomAlert(context, 'Chưa cập nhật được', apiErrorMessage(e));
+      }
     }
   }
 
@@ -218,6 +275,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               icon: LucideIcons.phoneCall,
               color: MomTheme.emergency,
               onPressed: call115,
+            ),
+            const SizedBox(height: 8),
+            MomSecondaryButton(
+              label: sendingSignal
+                  ? 'Đang gửi…'
+                  : 'Gửi tín hiệu cho Care Staff',
+              icon: LucideIcons.bellRing,
+              onPressed: sendingSignal ? null : sendSignal,
             ),
             if (reported != null)
               Padding(
@@ -369,6 +434,18 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             .toList(),
       ),
       const SizedBox(height: 18),
+      MomSectionTitle(
+        title: 'Lịch sử khẩn cấp',
+        subtitle: 'Đã lưu trên hệ thống, Care Staff cùng theo dõi',
+        right: IconButton(
+          tooltip: 'Tải lại',
+          onPressed: loadHistory,
+          icon: const Icon(LucideIcons.refreshCw, size: 18),
+          color: MomTheme.roseDark,
+        ),
+      ),
+      _History(events: events, error: historyError, onResolve: resolve),
+      const SizedBox(height: 18),
       const MomSectionTitle(title: 'Dấu hiệu cần đi khám ngay'),
       const MomCard(
         child: Column(
@@ -409,4 +486,92 @@ class _Bullet extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 4),
     child: Text('•  $text', style: MomText.body),
   );
+}
+
+class _History extends StatelessWidget {
+  const _History({
+    required this.events,
+    required this.error,
+    required this.onResolve,
+  });
+
+  final List<EmergencyEvent>? events;
+  final String? error;
+  final ValueChanged<EmergencyEvent> onResolve;
+
+  static String _time(DateTime? d) {
+    if (d == null) return '';
+    String p(int n) => n.toString().padLeft(2, '0');
+    return '${p(d.hour)}:${p(d.minute)} · ${p(d.day)}/${p(d.month)}/${d.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = events;
+    if (list == null) {
+      return MomCard(
+        child: Text(
+          error ?? 'Đang tải…',
+          style: TextStyle(
+            fontSize: 13,
+            color: error != null ? MomTheme.danger : MomTheme.muted,
+          ),
+        ),
+      );
+    }
+    if (list.isEmpty) {
+      return const MomCard(
+        child: Text(
+          'Chưa có lần khẩn cấp nào. Mong mẹ và bé luôn bình an 🌸',
+          style: MomText.muted,
+        ),
+      );
+    }
+    return MomCard(
+      child: Column(
+        children: [
+          for (final (i, e) in list.take(5).indexed) ...[
+            if (i > 0) const Divider(height: 20, color: MomTheme.borderSoft),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  e.resolved ? LucideIcons.circleCheck : LucideIcons.siren,
+                  size: 18,
+                  color: e.resolved ? MomTheme.sageDark : MomTheme.danger,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        e.message.replaceFirst(emergencyMarker, '').trim(),
+                        style: MomText.body,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        e.resolved
+                            ? '${_time(e.createdAt)} · Đã an toàn'
+                            : _time(e.createdAt),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: MomTheme.mutedLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!e.resolved)
+                  TextButton(
+                    onPressed: () => onResolve(e),
+                    child: const Text('Đã ổn'),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

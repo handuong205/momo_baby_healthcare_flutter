@@ -3,8 +3,12 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/network/api_error.dart';
 import '../../../shared/widgets/mom_ui.dart';
+import '../../auth/state/auth_controller.dart';
+import '../data/relax_repository.dart';
 
 class _Track {
   const _Track(this.title, this.subtitle, this.asset, this.icon, this.color);
@@ -50,6 +54,7 @@ const _tracks = [
 const _timerOptions = [0, 15, 30, 60];
 
 /// (15) Thư giãn — nhạc thư giãn phát qua loa, hẹn giờ tắt và bài tập thở.
+/// Mức căng thẳng và thời gian thư giãn được ghi vào nhật ký lối sống.
 class RelaxScreen extends StatefulWidget {
   const RelaxScreen({super.key});
 
@@ -58,7 +63,16 @@ class RelaxScreen extends StatefulWidget {
 }
 
 class _RelaxScreenState extends State<RelaxScreen> {
+  late final repository = RelaxRepository(
+    context.read<AuthController>().repository.client,
+  );
   final player = AudioPlayer(playerId: 'relax');
+  LifestyleToday? today;
+  String? todayError;
+  bool savingStress = false;
+
+  /// Thời gian nghe nhạc chưa ghi lên backend.
+  final _listening = Stopwatch();
   StreamSubscription<PlayerState>? _stateSub;
   _Track? current;
   bool playing = false;
@@ -79,12 +93,68 @@ class _RelaxScreenState extends State<RelaxScreen> {
       ).build(),
     );
     _stateSub = player.onPlayerStateChanged.listen((state) {
-      if (mounted) setState(() => playing = state == PlayerState.playing);
+      final isPlaying = state == PlayerState.playing;
+      if (isPlaying) {
+        _listening.start();
+      } else {
+        _listening.stop();
+        _flushListening();
+      }
+      if (mounted) setState(() => playing = isPlaying);
     });
+    loadToday();
+  }
+
+  Future<void> loadToday() async {
+    try {
+      final result = await repository.today();
+      if (mounted) {
+        setState(() {
+          today = result;
+          todayError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => todayError = apiErrorMessage(e));
+    }
+  }
+
+  Future<void> setStress(StressLevel level) async {
+    setState(() => savingStress = true);
+    try {
+      final result = await repository.setStress(level);
+      if (mounted) setState(() => today = result);
+    } catch (e) {
+      if (mounted) {
+        await showMomAlert(context, 'Chưa lưu được', apiErrorMessage(e));
+      }
+    } finally {
+      if (mounted) setState(() => savingStress = false);
+    }
+  }
+
+  /// Cộng thời gian thư giãn vào "chăm sóc bản thân" hôm nay.
+  Future<void> logSelfCare(Duration duration) async {
+    try {
+      final result = await repository.addSelfCare(duration);
+      if (mounted) setState(() => today = result);
+    } catch (e) {
+      debugPrint('Không ghi được thời gian thư giãn: ${apiErrorMessage(e)}');
+    }
+  }
+
+  /// Ghi phần nhạc đã nghe (bỏ qua dưới 1 phút để tránh ghi vụn).
+  void _flushListening() {
+    final elapsed = _listening.elapsed;
+    if (elapsed < const Duration(minutes: 1)) return;
+    _listening.reset();
+    logSelfCare(elapsed);
   }
 
   @override
   void dispose() {
+    _listening.stop();
+    _flushListening();
     _sleepTimer?.cancel();
     _ticker?.cancel();
     _stateSub?.cancel();
@@ -153,7 +223,20 @@ class _RelaxScreenState extends State<RelaxScreen> {
     title: 'Thư giãn',
     subtitle: 'Một phút cho riêng mẹ. Nhạc phát qua loa, có hẹn giờ tắt.',
     children: [
-      const _BreathingCard(),
+      _MoodCard(
+        today: today,
+        error: todayError,
+        saving: savingStress,
+        onSelect: setStress,
+        onRetry: loadToday,
+      ),
+      _BreathingCard(
+        onCompleted: () => logSelfCare(
+          const Duration(
+            seconds: _BreathingCardState._cycle * _BreathingCardState._rounds,
+          ),
+        ),
+      ),
       const MomSectionTitle(
         title: 'Nhạc thư giãn',
         subtitle: 'Giúp mẹ thư thái và bé dễ ngủ',
@@ -357,7 +440,9 @@ class _PlayerPanel extends StatelessWidget {
 
 /// Bài tập thở 4-2-6: hít vào 4 giây, giữ 2 giây, thở ra 6 giây.
 class _BreathingCard extends StatefulWidget {
-  const _BreathingCard();
+  const _BreathingCard({required this.onCompleted});
+
+  final VoidCallback onCompleted;
 
   @override
   State<_BreathingCard> createState() => _BreathingCardState();
@@ -368,10 +453,15 @@ class _BreathingCardState extends State<_BreathingCard>
   static const _inhale = 4, _hold = 2, _exhale = 6, _rounds = 5;
   static const _cycle = _inhale + _hold + _exhale;
 
-  late final controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: _cycle * _rounds),
-  )..addListener(() => setState(() {}));
+  late final controller =
+      AnimationController(
+          vsync: this,
+          duration: const Duration(seconds: _cycle * _rounds),
+        )
+        ..addListener(() => setState(() {}))
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) widget.onCompleted();
+        });
 
   @override
   void dispose() {
@@ -487,6 +577,77 @@ class _BreathingCardState extends State<_BreathingCard>
             color: MomTheme.sageDark,
             onPressed: toggle,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Mẹ tự chọn mức căng thẳng hôm nay; kèm thời gian đã thư giãn.
+class _MoodCard extends StatelessWidget {
+  const _MoodCard({
+    required this.today,
+    required this.error,
+    required this.saving,
+    required this.onSelect,
+    required this.onRetry,
+  });
+
+  final LifestyleToday? today;
+  final String? error;
+  final bool saving;
+  final ValueChanged<StressLevel> onSelect;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = today;
+    return MomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Hôm nay mẹ thấy thế nào?', style: MomText.label),
+          const SizedBox(height: 10),
+          if (data == null && error != null)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    error!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: MomTheme.danger,
+                    ),
+                  ),
+                ),
+                TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+              ],
+            )
+          else ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: StressLevel.values
+                  .map(
+                    (level) => MomChip(
+                      label: '${level.emoji} ${level.label}',
+                      selected: data?.stressLevel == level,
+                      onTap: saving || data == null
+                          ? null
+                          : () => onSelect(level),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              data == null
+                  ? 'Đang tải…'
+                  : 'Thời gian cho bản thân hôm nay: ${data.selfCareMinutes} phút'
+                        '${data.healthScore != null ? ' · Điểm sức khỏe ${data.healthScore}/100' : ''}',
+              style: const TextStyle(fontSize: 12, color: MomTheme.muted),
+            ),
+          ],
         ],
       ),
     );
