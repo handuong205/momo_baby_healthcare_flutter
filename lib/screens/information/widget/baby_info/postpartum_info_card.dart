@@ -1,13 +1,17 @@
-
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 class PostpartumInfoCard extends StatefulWidget {
-  const PostpartumInfoCard({super.key});
+  final void Function(
+    DateTime birthDate,
+    String deliveryMethod,
+    bool isBreastfeeding,
+  )?
+  onChanged;
+  const PostpartumInfoCard({super.key, this.onChanged});
 
   @override
-  State<PostpartumInfoCard> createState() =>
-      _PostpartumInfoCardState();
+  State<PostpartumInfoCard> createState() => _PostpartumInfoCardState();
 }
 
 class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
@@ -27,6 +31,10 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
     return today.difference(birthDate).inDays.clamp(0, 99999);
   }
 
+  void _notifyChanged() {
+    widget.onChanged?.call(_birthDate, _deliveryMethod, _isBreastfeeding);
+  }
+
   Future<void> _changeBirthDate() async {
     final selected = await showDatePicker(
       context: context,
@@ -37,6 +45,7 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
 
     if (selected != null) {
       setState(() => _birthDate = selected);
+      _notifyChanged();
     }
   }
 
@@ -145,10 +154,7 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
                   label: 'Sinh thường',
                   icon: Icons.check_circle_rounded,
                 ),
-                _deliveryOption(
-                  label: 'Sinh mổ',
-                  icon: Icons.healing_rounded,
-                ),
+                _deliveryOption(label: 'Sinh mổ', icon: Icons.healing_rounded),
               ],
             ),
           ),
@@ -228,6 +234,7 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
                   activeTrackColor: AppColors.primary,
                   onChanged: (value) {
                     setState(() => _isBreastfeeding = value);
+                    _notifyChanged();
                   },
                 ),
               ],
@@ -238,16 +245,14 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
     );
   }
 
-  Widget _deliveryOption({
-    required String label,
-    required IconData icon,
-  }) {
+  Widget _deliveryOption({required String label, required IconData icon}) {
     final selected = _deliveryMethod == label;
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() => _deliveryMethod = label);
+          _notifyChanged();
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -262,9 +267,7 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
               Icon(
                 selected ? Icons.check_circle_rounded : icon,
                 size: 18,
-                color: selected
-                    ? Colors.white
-                    : AppColors.textSecondary,
+                color: selected ? Colors.white : AppColors.textSecondary,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -273,9 +276,7 @@ class _PostpartumInfoCardState extends State<PostpartumInfoCard> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: selected
-                        ? Colors.white
-                        : AppColors.textSecondary,
+                    color: selected ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -362,18 +363,11 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-Widget _iconCircle(
-  IconData icon,
-  Color background,
-  Color foreground,
-) {
+Widget _iconCircle(IconData icon, Color background, Color foreground) {
   return Container(
     width: 38,
     height: 38,
-    decoration: BoxDecoration(
-      color: background,
-      shape: BoxShape.circle,
-    ),
+    decoration: BoxDecoration(color: background, shape: BoxShape.circle),
     child: Icon(icon, size: 20, color: foreground),
   );
 }

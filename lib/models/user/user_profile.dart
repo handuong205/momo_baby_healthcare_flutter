@@ -45,28 +45,27 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      userId: json['user_id'],
-      stage: json['stage'],
-      pregnancyWeek: json['pregnancy_week'],
+      userId: json['userId'] as String,
+      stage: json['stage'] as String,
+      pregnancyWeek: (json['pregnancyWeek'] as num?)?.toInt(),
       bmi: (json['bmi'] as num?)?.toDouble(),
       height: (json['height'] as num?)?.toDouble(),
       weight: (json['weight'] as num?)?.toDouble(),
-      bloodSugarLevel: (json['blood_sugar_level'] as num?)?.toDouble(),
-      hasGestDiabetes: json['has_gest_diabetes'],
-      medicalConditions: json['medical_conditions'],
-      avgCycleLength: json['avg_cycle_length'],
-      lastPeriodDate: json['last_period_date'],
-      deliveryDate: json['delivery_date'],
-      isBreastfeeding: json['is_breastfeeding'],
-      cycleLogs: json['cycle_logs'] ?? [],
-      epdsAssessments: json['epds_assessments'] ?? [],
-      id: json['id'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      isDeleted: json['is_deleted'],
-      deletedAt:
-          json['deleted_at'] != null 
-          ? DateTime.parse(json['deleted_at']) 
+      bloodSugarLevel: (json['bloodSugarLevel'] as num?)?.toDouble(),
+      hasGestDiabetes: json['hasGestDiabetes'] as bool? ?? false,
+      medicalConditions: json['medicalConditions'] as String?,
+      avgCycleLength: (json['avgCycleLength'] as num?)?.toInt(),
+      lastPeriodDate: json['lastPeriodDate'] as String?,
+      deliveryDate: json['deliveryDate'] as String?,
+      isBreastfeeding: json['isBreastfeeding'] as bool? ?? false,
+      cycleLogs: (json['cycleLogs'] as List<dynamic>?) ?? [],
+      epdsAssessments: (json['epdsAssessments'] as List<dynamic>?) ?? [],
+      id: (json['id'] as num).toInt(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isDeleted: json['isDeleted'] as bool? ?? false,
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
           : null,
     );
   }

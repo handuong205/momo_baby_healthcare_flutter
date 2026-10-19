@@ -1,7 +1,9 @@
-
 import 'package:flutter/material.dart';
+import 'package:momo_baby_healthcare_flutter/repositories/baby/postpartum_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/baby_info/newborn_profile_card.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/baby_info/postpartum_info_card.dart';
+import 'package:momo_baby_healthcare_flutter/screens/splash_screen.dart';
+import 'package:momo_baby_healthcare_flutter/shared/widgets/dialogs/app_result_dialog.dart';
 
 import '../../core/colors/app_colors.dart';
 
@@ -9,21 +11,27 @@ class PostpartumSetupScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onComplete;
 
-  const PostpartumSetupScreen({
-    super.key,
-    this.onBack,
-    this.onComplete,
-  });
+  const PostpartumSetupScreen({super.key, this.onBack, this.onComplete});
 
   @override
-  State<PostpartumSetupScreen> createState() =>
-      _PostpartumSetupScreenState();
+  State<PostpartumSetupScreen> createState() => _PostpartumSetupScreenState();
 }
 
-class _PostpartumSetupScreenState
-    extends State<PostpartumSetupScreen> {
+class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
   bool _isLoading = false;
   bool _isCompleted = false;
+  DateTime _birthDate = DateTime(2026, 10, 8);
+  String _gender = 'Bé gái';
+  String _deliveryMethod = 'Sinh thường';
+  bool _isBreastfeeding = true;
+  String _babyName = '';
+  double? _weight;
+  double? _height;
+  List<String> _allergies = [];
+
+  String get _apiGender {
+    return _gender == 'Bé trai' ? 'Male' : 'Female';
+  }
 
   void _handleBack() {
     if (widget.onBack != null) {
@@ -34,12 +42,27 @@ class _PostpartumSetupScreenState
   }
 
   Future<void> _handleSubmit() async {
-    if (_isLoading || _isCompleted) return;
+  if (_isLoading || _isCompleted) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    // TODO: Gọi API lưu thông tin mẹ và bé tại đây.
-    await Future.delayed(const Duration(milliseconds: 900));
+  try {
+    // 1. Lưu hồ sơ em bé.
+    await PostpartumRepository.saveBabyProfile(
+      babyName: _babyName.trim(),
+      dateOfBirth: _birthDate,
+      gender: _apiGender,
+      currentWeightKg: _weight,
+      currentHeightCm: _height,
+      allergies: _allergies,
+    );
+
+    // 2. Thiết lập thông tin sau sinh.
+    final setup = await PostpartumRepository.setupPostpartum(
+      deliveryDate: _birthDate,
+      deliveryType: _deliveryMethod,
+      isBreastfeeding: _isBreastfeeding,
+    );
 
     if (!mounted) return;
 
@@ -48,9 +71,42 @@ class _PostpartumSetupScreenState
       _isCompleted = true;
     });
 
-    widget.onComplete?.call();
-  }
+    await AppResultDialog.showSuccess(
+      context,
+      title: 'Thiết lập thành công!',
+      message: [
+        setup.message.isNotEmpty
+            ? setup.message
+            : 'Thông tin mẹ và bé đã được lưu.',
+        if (setup.recoveryPhase.isNotEmpty) setup.recoveryPhase,
+        if (setup.initialRecommendations.isNotEmpty)
+          setup.initialRecommendations,
+      ].join('\n\n'),
+      buttonText: 'Tiếp tục',
+    );
 
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SplashScreen()),
+      (route) => false,
+    );
+  } catch (e, stackTrace) {
+    debugPrint('Lỗi thiết lập hồ sơ mẹ và bé: $e');
+    debugPrintStack(stackTrace: stackTrace);
+
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    await AppResultDialog.showError(
+      context,
+      title: 'Không thể thiết lập',
+      message: 'Không thể lưu thông tin mẹ và bé. Vui lòng thử lại.',
+      buttonText: 'Đóng',
+    );
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,9 +130,7 @@ class _PostpartumSetupScreenState
                       height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.border,
-                        ),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
@@ -98,10 +152,26 @@ class _PostpartumSetupScreenState
                     _buildProgress(),
                     const SizedBox(height: 20),
 
-                    const PostpartumInfoCard(),
+                    PostpartumInfoCard(
+                      onChanged: (birthDate, deliveryMethod, isBreastfeeding) {
+                        _birthDate = birthDate;
+                        _deliveryMethod = deliveryMethod;
+                        _isBreastfeeding = isBreastfeeding;
+                      },
+                    ),
                     const SizedBox(height: 20),
 
-                    const NewbornProfileCard(),
+                    NewbornProfileCard(
+                      onGenderChanged: (gender) {
+                        _gender = gender;
+                      },
+                      onProfileChanged: (name, weight, height, allergies) {
+                        _babyName = name;
+                        _weight = weight;
+                        _height = height;
+                        _allergies = allergies;
+                      },
+                    ),
                     const SizedBox(height: 16),
 
                     _buildAiCard(),
@@ -123,9 +193,9 @@ class _PostpartumSetupScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),   
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         ),
-        
+
         const Text(
           'Khởi tạo lộ trình phục hồi cho mẹ & bé',
           style: TextStyle(
@@ -229,9 +299,7 @@ class _PostpartumSetupScreenState
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-            onPressed: _isLoading || _isCompleted
-                ? null
-                : _handleSubmit,
+            onPressed: _isLoading || _isCompleted ? null : _handleSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: _isCompleted
                   ? AppColors.secondary
@@ -269,8 +337,8 @@ class _PostpartumSetupScreenState
                   _isLoading
                       ? 'Đang thiết lập MomOi...'
                       : _isCompleted
-                          ? 'Khởi tạo thành công!'
-                          : 'Lưu & Khởi tạo lộ trình',
+                      ? 'Khởi tạo thành công!'
+                      : 'Lưu & Khởi tạo lộ trình',
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontWeight: FontWeight.w700,
@@ -294,10 +362,7 @@ class _PostpartumSetupScreenState
         ),
         const SizedBox(height: 10),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(24),

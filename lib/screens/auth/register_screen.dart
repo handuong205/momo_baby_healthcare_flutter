@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/exceptions/api_error.dart';
 import 'package:momo_baby_healthcare_flutter/exceptions/api_exception.dart';
 import 'package:momo_baby_healthcare_flutter/models/auth/register_request.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
@@ -137,19 +138,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_getErrorMessage(e)),
+          content: Text(ApiError.getErrorMessage(e)),
           behavior: SnackBarBehavior.floating,
         ),
       );
     }
-  }
-
-  String _getErrorMessage(Object error) {
-    if (error is ApiException) {
-      return error.message;
-    }
-
-    return 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
   }
 
   Future<void> _showRegisterSuccessDialog() async {
