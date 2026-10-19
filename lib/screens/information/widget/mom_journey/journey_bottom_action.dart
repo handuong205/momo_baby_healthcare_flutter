@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 class JourneyBottomAction extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool isLoading;
 
   const JourneyBottomAction({
     super.key,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -19,7 +21,7 @@ class JourneyBottomAction extends StatelessWidget {
           height: 52,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [
                   AppColors.primaryContainer,
                   AppColors.primaryDark,
@@ -28,48 +30,66 @@ class JourneyBottomAction extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(
-                    alpha: 0.25,
-                  ),
+                  color: AppColors.primary.withValues(alpha: 0.25),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
               ],
             ),
             child: ElevatedButton(
-              onPressed: onPressed,
+              onPressed: isLoading ? null : onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
+                disabledBackgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
                 foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white70,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Tiếp tục',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  if (isLoading) ...[
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward,
-                    size: 20,
-                  ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Đang xử lý...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ] else ...[
+                    const Text(
+                      'Tiếp tục',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 20,
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
         ),
-
         const SizedBox(height: 8),
-
         const Text(
           'Mẹ có thể thay đổi giai đoạn bất kỳ lúc nào trong Cài đặt.',
           textAlign: TextAlign.center,

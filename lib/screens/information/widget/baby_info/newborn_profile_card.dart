@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 class NewbornProfileCard extends StatefulWidget {
-  const NewbornProfileCard({super.key});
-
+  final ValueChanged<String>? onGenderChanged;
+  final void Function(
+    String name,
+    double? weight,
+    double? height,
+    List<String> allergies,
+  )?
+  onProfileChanged;
+  const NewbornProfileCard({super.key, this.onGenderChanged, this.onProfileChanged});
+  
   @override
   State<NewbornProfileCard> createState() => _NewbornProfileCardState();
 }
@@ -12,6 +20,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
   final _nameController = TextEditingController(text: 'Bé Bắp');
   final _weightController = TextEditingController(text: '3.4');
   final _heightController = TextEditingController(text: '50.0');
+  
   bool _isMultiSelect = true;
   String _gender = 'Bé gái';
 
@@ -20,6 +29,16 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
   final Set<String> _selectedAllergies = {};
 
   bool get _noAllergies => _selectedAllergies.isEmpty;
+  
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_notifyProfileChanged);
+    _weightController.addListener(_notifyProfileChanged);
+    _heightController.addListener(_notifyProfileChanged);
+    // Báo giá trị mặc định cho màn cha ngay từ đầu.
+    _notifyProfileChanged();
+  }
 
   @override
   void dispose() {
@@ -29,48 +48,73 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
     super.dispose();
   }
 
+  double? _parseNumber(String text) {
+    return double.tryParse(text.trim().replaceAll(',', '.'));
+  }
+
+  void _notifyProfileChanged() {
+    widget.onProfileChanged?.call(
+      _nameController.text.trim(),
+      _parseNumber(_weightController.text),
+      _parseNumber(_heightController.text),
+      _selectedAllergies.toList(),
+    );
+  }
+
   Future<void> _addAllergy() async {
-    final controller = TextEditingController();
+    var input = '';
 
     final value = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Thêm dị ứng'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Nhập thực phẩm cần lưu ý',
+      builder: (dialogContext) {
+        void submit() {
+          final text = input.trim();
+          if (text.isNotEmpty) {
+            Navigator.pop(dialogContext, text);
+          }
+        }
+
+        return AlertDialog(
+          title: const Text('Thêm dị ứng'),
+          content: TextField(
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.done,
+            onChanged: (text) => input = text,
+            onSubmitted: (_) => submit(),
+            decoration: const InputDecoration(
+              hintText: 'Nhập thực phẩm cần lưu ý',
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isNotEmpty) {
-                Navigator.pop(dialogContext, text);
-              }
-            },
-            child: const Text('Thêm'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(onPressed: submit, child: const Text('Thêm')),
+          ],
+        );
+      },
     );
 
-    controller.dispose();
+    if (!mounted || value == null) return;
 
-    if (value != null && value.trim().isNotEmpty) {
-      setState(() {
-        if (!_allergies.contains(value.trim())) {
-          _allergies.add(value.trim());
-        }
-        _selectedAllergies.add(value.trim());
-      });
-    }
+    // Nếu đã có mục trùng tên (không phân biệt hoa thường) thì chọn mục đó.
+    final existing = _allergies.where(
+      (allergy) => allergy.toLowerCase() == value.toLowerCase(),
+    );
+    final allergy = existing.isEmpty ? value : existing.first;
+
+    setState(() {
+      if (existing.isEmpty) {
+        _allergies.add(allergy);
+      }
+      if (!_isMultiSelect) {
+        _selectedAllergies.clear();
+      }
+      _selectedAllergies.add(allergy);
+    });
+    _notifyProfileChanged();
   }
 
   @override
@@ -162,7 +206,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                   controller: _weightController,
                   unit: 'kg',
                   icon: Icons.monitor_weight_outlined,
-                  badge: '✓ Chuẩn WHO',
+                  badge: '',
                   badgeColor: AppColors.mintLight,
                   badgeTextColor: AppColors.secondary,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -177,7 +221,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                   controller: _heightController,
                   unit: 'cm',
                   icon: Icons.straighten_rounded,
-                  badge: '☆ Chuẩn sơ sinh',
+                  badge: '',
                   badgeColor: AppColors.background,
                   badgeTextColor: AppColors.textSecondary,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -211,6 +255,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                         ..add(firstSelected);
                     }
                   });
+                  _notifyProfileChanged();
                 },
               ),
             ],
@@ -226,6 +271,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                 selected: _noAllergies,
                 onTap: () {
                   setState(() => _selectedAllergies.clear());
+                  _notifyProfileChanged();
                 },
               ),
               ..._allergies.map(
@@ -243,6 +289,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                         _selectedAllergies.add(allergy);
                       }
                     });
+                    _notifyProfileChanged();
                   },
                 ),
               ),
@@ -287,7 +334,10 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
 
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _gender = gender),
+        onTap: () {
+          setState(() => _gender = gender);
+          widget.onGenderChanged?.call(gender);
+        },
         borderRadius: BorderRadius.circular(14),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),

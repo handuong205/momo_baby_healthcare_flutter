@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/exceptions/api_error.dart';
+import 'package:momo_baby_healthcare_flutter/exceptions/api_exception.dart';
+import 'package:momo_baby_healthcare_flutter/repositories/user/user_profile.repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/postpartum_setup_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/pregnancy_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/mom_journey/journey_bottom_action.dart';
@@ -26,6 +29,8 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
     text: 'Bé Bắp',
   );
 
+  bool _isLoading = false;
+
   @override
   void dispose() {
     _nicknameController.dispose();
@@ -38,31 +43,70 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
     });
   }
 
-  void _continue() {
+  Future<void> _continue() async {
+  if (_isLoading) return;
+
+  final stage = switch (_selectedStage) {
+    PregnancyStage.prePregnancy => 'PrePregnancy',
+    PregnancyStage.pregnancy => 'Pregnant',
+    PregnancyStage.postpartum => 'Postpartum',
+  };
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    await UserProfileRepository.chooseStageUserProfile(stage);
+
+    if (!mounted) return;
+
+    Widget nextScreen;
+
     switch (_selectedStage) {
       case PregnancyStage.prePregnancy:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PrePregnancyScreen()),
-        );
+        nextScreen = const PrePregnancyScreen();
         break;
 
       case PregnancyStage.pregnancy:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PregnancyScreen()),
-        );
+        nextScreen = const PregnancyScreen();
         break;
 
       case PregnancyStage.postpartum:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PostpartumSetupScreen()),
-        );
+        nextScreen = const PostpartumSetupScreen();
         break;
     }
-  }
 
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => nextScreen),
+    );
+  } on ApiException catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ApiError.getErrorMessage(e)),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ApiError.getErrorMessage(e)),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,6 +135,7 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                       emoji: '🌸',
                       title: 'Chuẩn bị mang thai',
                       description: 'Theo dõi chu kỳ kinh nguyệt, tính ngày rụng trứng tối ưu để sẵn sàng đón tin vui.',
+                      isDisabled: _isLoading,
                       onTap: () {
                         _selectStage(PregnancyStage.prePregnancy);
                       },
@@ -105,8 +150,9 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                       stage: PregnancyStage.pregnancy,
                       selectedStage: _selectedStage,
                       emoji: '🤰',
-                      title: 'Đang mang thai (Bé trong bụng)',
+                      title: 'Đang mang thai',
                       description: 'Đồng hành theo dõi tuần thai, dinh dưỡng mẹ bầu và chuẩn bị sinh trọn gói.',
+                      isDisabled: _isLoading,
                       popular: true,
                       onTap: () {
                         _selectStage(PregnancyStage.pregnancy);
@@ -124,6 +170,7 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                       emoji: '👶',
                       title: 'Bé đã chào đời',
                       description: 'Theo dõi cân nặng, chiều cao WHO, cữ bú, giấc ngủ và thực đơn ăn dặm cho bé.',
+                      isDisabled: _isLoading,
                       nicknameController: _nicknameController,
                       onTap: () {
                         _selectStage(PregnancyStage.postpartum);
@@ -136,7 +183,10 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
 
                     const SizedBox(height: 16),
 
-                    JourneyBottomAction(onPressed: _continue),
+                    JourneyBottomAction(
+                      onPressed: _isLoading ? null : _continue,
+                      isLoading: _isLoading,
+                    ),
 
                     const SizedBox(height: 16),
                   ],

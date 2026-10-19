@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
-
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
+/// Thanh tab dưới kiểu liquid glass, với 5 tab và màu theo
+/// `TabNavigator.tsx` bên React Native (tab đang chọn màu roseDark).
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -13,23 +14,12 @@ class AppBottomNav extends StatelessWidget {
     required this.onTap,
   });
 
-  static const List<_NavItem> _items = [
-    _NavItem(
-      icon: Icons.cottage_rounded,
-      label: 'Trang chủ',
-    ),
-    _NavItem(
-      icon: Icons.restaurant_menu_rounded,
-      label: 'Ăn uống',
-    ),
-    _NavItem(
-      icon: Icons.auto_stories_rounded,
-      label: 'Nhật ký con',
-    ),
-    _NavItem(
-      icon: Icons.support_agent_rounded,
-      label: 'Bác sĩ ơi',
-    ),
+  static const List<AppNavItem> items = [
+    AppNavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Tổng quan'),
+    AppNavItem(icon: Icons.monitor_heart_outlined, activeIcon: Icons.monitor_heart_rounded, label: 'Lộ trình'),
+    AppNavItem(icon: Icons.child_care_outlined, activeIcon: Icons.child_care_rounded, label: 'Bé yêu'),
+    AppNavItem(icon: Icons.show_chart_rounded, activeIcon: Icons.show_chart_rounded, label: 'AI'),
+    AppNavItem(icon: Icons.grid_view_outlined, activeIcon: Icons.grid_view_rounded, label: 'Menu'),
   ];
 
   @override
@@ -39,18 +29,18 @@ class AppBottomNav extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
         child: GlassTabBar.bottom(
-          tabs: _items.map((item) {
+          tabs: items.map((item) {
             return GlassTab(
               icon: Icon(
                 item.icon,
-                color: AppColors.onSurfaceVariant,
+                color: MomTheme.mutedLight,
               ),
               activeIcon: Icon(
-                item.icon,
-                color: AppColors.primary,
+                item.activeIcon,
+                color: MomTheme.roseDark,
               ),
               label: item.label,
-              glowColor: AppColors.primary,
+              glowColor: MomTheme.roseDark,
             );
           }).toList(),
           selectedIndex: currentIndex,
@@ -61,12 +51,14 @@ class AppBottomNav extends StatelessWidget {
   }
 }
 
-class _NavItem {
+class AppNavItem {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
 
-  const _NavItem({
+  const AppNavItem({
     required this.icon,
+    required this.activeIcon,
     required this.label,
   });
 }
