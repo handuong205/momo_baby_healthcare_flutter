@@ -3,9 +3,10 @@ import 'package:momo_baby_healthcare_flutter/models/baby/postpartum_setup_respon
 import 'package:momo_baby_healthcare_flutter/services/api_service.dart';
 
 class PostpartumRepository {
+  /// [gender]: 0 = bé trai, 1 = bé gái (giống `toBabyPayload` bên RN).
   static Future<BabyProfileResponse> saveBabyProfile({
     required DateTime dateOfBirth,
-    required String gender,
+    required int gender,
     required String babyName,
     double? currentWeightKg,
     double? currentHeightCm,
@@ -24,6 +25,7 @@ class PostpartumRepository {
         'currentWeightKg': currentWeightKg,
         'currentHeightCm': currentHeightCm,
         'allergies': allergies,
+        'foodHistory': <String>[],
       },
       requiresAuth: true,
     );
@@ -39,6 +41,7 @@ class PostpartumRepository {
     );
   }
 
+  /// [deliveryType]: 'natural' (sinh thường) hoặc 'cesarean' (sinh mổ), giống RN.
   static Future<PostpartumSetupResponse> setupPostpartum({
     required DateTime deliveryDate,
     required String deliveryType,

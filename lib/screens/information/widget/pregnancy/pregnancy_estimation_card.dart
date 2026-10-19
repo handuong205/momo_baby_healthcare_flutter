@@ -3,7 +3,37 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 class PregnancyEstimationCard extends StatelessWidget {
-  const PregnancyEstimationCard({super.key});
+  /// Số tuần thai tròn và số ngày lẻ, tính từ ngày kinh cuối.
+  final int weeks;
+  final int days;
+
+  const PregnancyEstimationCard({super.key, this.weeks = 14, this.days = 2});
+
+  // TCN 1: tuần 1-13, TCN 2: tuần 14-27, TCN 3: tuần 28 trở đi.
+  int get _trimester => weeks < 14 ? 1 : (weeks < 28 ? 2 : 3);
+
+  String get _trimesterText => switch (_trimester) {
+    1 => 'Tam cá nguyệt thứ 1 (3 tháng đầu)',
+    2 => 'Tam cá nguyệt thứ 2 (3 tháng giữa)',
+    _ => 'Tam cá nguyệt thứ 3 (3 tháng cuối)',
+  };
+
+  String _trimesterLabel(int trimester) {
+    if (trimester < _trimester) return 'TCN $trimester (Đã qua)';
+    if (trimester == _trimester) return 'TCN $trimester (Hiện tại)';
+    return 'TCN $trimester';
+  }
+
+  Color _trimesterLabelColor(int trimester) {
+    if (trimester == _trimester) return AppColors.primaryDark;
+    if (trimester < _trimester) return AppColors.textPrimary;
+    return AppColors.textSecondary;
+  }
+
+  double _segmentProgress(int startWeek, int lengthWeeks) {
+    final elapsed = weeks + days / 7 - startWeek;
+    return (elapsed / lengthWeeks).clamp(0.0, 1.0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +58,8 @@ class PregnancyEstimationCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          const Text(
-            'Tuần thai thứ 14 • 2 ngày',
+          Text(
+            'Tuần thai thứ $weeks • $days ngày',
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 20,
@@ -41,8 +71,8 @@ class PregnancyEstimationCard extends StatelessWidget {
 
           const SizedBox(height: 2),
 
-          const Text(
-            'Tam cá nguyệt thứ 2 (3 tháng giữa)',
+          Text(
+            _trimesterText,
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 14,
@@ -124,19 +154,19 @@ class PregnancyEstimationCard extends StatelessWidget {
           children: [
             Expanded(
               child: _progressSegment(
-                progress: 1,
+                progress: _segmentProgress(1, 13),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: _progressSegment(
-                progress: 0.4,
+                progress: _segmentProgress(14, 14),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: _progressSegment(
-                progress: 0,
+                progress: _segmentProgress(28, 13),
               ),
             ),
           ],
@@ -144,36 +174,21 @@ class PregnancyEstimationCard extends StatelessWidget {
 
         const SizedBox(height: 6),
 
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'TCN 1 (Đã qua)',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+            for (final trimester in [1, 2, 3])
+              Text(
+                _trimesterLabel(trimester),
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: trimester == _trimester
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: _trimesterLabelColor(trimester),
+                ),
               ),
-            ),
-            Text(
-              'TCN 2 (Hiện tại)',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primaryDark,
-              ),
-            ),
-            Text(
-              'TCN 3',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
-            ),
           ],
         ),
       ],
