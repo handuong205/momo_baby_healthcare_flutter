@@ -5,7 +5,6 @@ import 'package:momo_baby_healthcare_flutter/screens/information/journey_selecti
 
 import 'pregnancy_details.dart';
 
-
 class JourneyCard extends StatelessWidget {
   final PregnancyStage stage;
   final PregnancyStage selectedStage;
@@ -15,6 +14,7 @@ class JourneyCard extends StatelessWidget {
   final String description;
 
   final bool popular;
+  final bool isDisabled;
 
   final int? currentWeek;
   final DateTime? dueDate;
@@ -28,6 +28,7 @@ class JourneyCard extends StatelessWidget {
   const JourneyCard({
     super.key,
     required this.stage,
+    this.isDisabled = false,
     required this.selectedStage,
     required this.emoji,
     required this.title,
@@ -45,183 +46,152 @@ class JourneyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = isSelected
-        ? AppColors.primary
-        : AppColors.onSurface;
+    final titleColor = isSelected ? AppColors.primary : AppColors.onSurface;
 
     return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(
-          milliseconds: 300,
-        ),
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.surface
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(32),
-          border: isSelected
-              ? Border.all(
-                  color: AppColors.primary,
-                  width: 2,
-                )
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: isSelected ? 0.06 : 0.03,
+      onTap: isDisabled ? null : onTap,
+      child: Opacity(
+        opacity: isDisabled ? 0.6 : 1.0,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.surface : AppColors.surface,
+            borderRadius: BorderRadius.circular(32),
+            border: isSelected
+                ? Border.all(color: AppColors.primary, width: 2)
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isSelected ? 0.06 : 0.03),
+                blurRadius: isSelected ? 12 : 6,
+                offset: const Offset(0, 2),
               ),
-              blurRadius: isSelected ? 12 : 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    // Emoji
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius:
-                            BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(
-                          fontSize: 25,
+            ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Emoji
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 25),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(width: 16),
+                      const SizedBox(width: 16),
 
-                    // Title + description
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          right: 28,
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            if (popular)
-                              Container(
-                                margin: const EdgeInsets.only(
-                                  bottom: 4,
-                                ),
-                                padding:
-                                    const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                    999,
+                      // Title + description
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 28),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (popular)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: const Text(
+                                    'Phổ biến nhất ✨',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Phổ biến nhất ✨',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight:
-                                        FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
+
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  height: 1.35,
+                                  fontWeight: FontWeight.w600,
+                                  color: titleColor,
                                 ),
                               ),
 
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: 16,
-                                height: 1.35,
-                                fontWeight: FontWeight.w600,
-                                color: titleColor,
-                              ),
-                            ),
+                              const SizedBox(height: 2),
 
-                            const SizedBox(height: 2),
-
-                            Text(
-                              description,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 1.4,
-                                color:
-                                    AppColors.textSecondary,
+                              Text(
+                                description,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 1.4,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-
-                if (isSelected &&
-                    stage == PregnancyStage.pregnancy &&
-                    currentWeek != null &&
-                    dueDate != null &&
-                    nicknameController != null)
-                  PregnancyDetails(
-                    currentWeek: currentWeek!,
-                    dueDate: dueDate!,
-                    nicknameController:
-                        nicknameController!,
-                    onWeekChanged: onWeekChanged!,
-                    onSelectDueDate:
-                        onSelectDueDate!,
+                    ],
                   ),
-              ],
-            ),
 
-            // Radio
-            Positioned(
-              top: 0,
-              right: 0,
-              child: AnimatedContainer(
-                duration: const Duration(
-                  milliseconds: 200,
-                ),
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.border,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
+                  if (isSelected &&
+                      stage == PregnancyStage.pregnancy &&
+                      currentWeek != null &&
+                      dueDate != null &&
+                      nicknameController != null)
+                    PregnancyDetails(
+                      currentWeek: currentWeek!,
+                      dueDate: dueDate!,
+                      nicknameController: nicknameController!,
+                      onWeekChanged: onWeekChanged!,
+                      onSelectDueDate: onSelectDueDate!,
+                    ),
+                ],
+              ),
+
+              // Radio
+              Positioned(
+                top: 0,
+                right: 0,
                 child: AnimatedContainer(
-                  duration: const Duration(
-                    milliseconds: 200,
-                  ),
-                  width: 10,
-                  height: 10,
+                  duration: const Duration(milliseconds: 200),
+                  width: 24,
+                  height: 24,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.surface
-                        : Colors.transparent,
+                    color: isSelected ? AppColors.primary : AppColors.border,
                     shape: BoxShape.circle,
                   ),
+                  alignment: Alignment.center,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.surface
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

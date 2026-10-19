@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/models/information/pre_pregnancy/pre_pregnancy_request.dart';
+import 'package:momo_baby_healthcare_flutter/repositories/fertility/fertility_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/pre_pregnancy/pre_pregnancy_header.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/pre_pregnancy/pre_pregnancy_cycle_card.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/pre_pregnancy/pre_pregnancy_fertility_card.dart';
+import 'package:momo_baby_healthcare_flutter/screens/splash_screen.dart';
+import 'package:momo_baby_healthcare_flutter/shared/widgets/dialogs/app_result_dialog.dart';
 
 class PrePregnancyScreen extends StatefulWidget {
   const PrePregnancyScreen({super.key});
@@ -84,23 +88,58 @@ class _PrePregnancyScreenState extends State<PrePregnancyScreen> {
       _isLoading = true;
     });
 
-    // TODO:
-    // Gọi API lưu thông tin PrePregnancy.
-    //
-    // Chỉ navigate sang màn tiếp theo
-    // khi API trả HTTP 200.
+    try {
+      final request = PrePregnancyRequest(
+        periodStartDate: _lastPeriodDate,
+        cycleLength: _cycleLength,
+        symptoms: _selectedSymptoms.toList(),
+      );
 
-    await Future.delayed(const Duration(milliseconds: 800));
+      // Gọi API lưu thông tin chu kỳ
+      final result = await FertilityRepository.save(request);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-    });
+      setState(() {
+        _isLoading = false;
+      });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Đã hoàn tất tính toán! 🎉')));
+      // Hiển thị thông báo khi API thành công
+      await AppResultDialog.showSuccess(
+        context,
+        title: 'Hoàn tất thông tin! 🌸',
+        message:
+            'Bạn đã lưu thông tin chu kỳ thành công.\n\n'
+            'Ngày rụng trứng dự kiến: '
+            '${result.ovulationDay != null ? _formatDate(result.ovulationDay!) : "Chưa có dữ liệu"}\n\n'
+            'MomOi sẽ đồng hành cùng bạn trong hành trình chuẩn bị mang thai nhé!',
+        buttonText: 'Tiếp tục',
+        onAction: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const SplashScreen()),
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể lưu thông tin: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
   }
 
   // ============================================================
@@ -167,7 +206,7 @@ class _PrePregnancyScreenState extends State<PrePregnancyScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),   
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         ),
 
         const Text(

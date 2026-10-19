@@ -71,6 +71,10 @@ class AuthRepository {
   }
 
   static Future<void> logout() async {
-    await TokenService.clearTokens();
+    try {
+      await ApiService.post('/api/auth/logout', requiresAuth: true);
+    } finally {
+      await TokenService.clearTokens();
+    }
   }
 }
