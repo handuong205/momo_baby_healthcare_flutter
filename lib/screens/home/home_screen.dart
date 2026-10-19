@@ -1,10 +1,37 @@
 import 'package:flutter/material.dart';
-
+import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
+import 'package:momo_baby_healthcare_flutter/shared/widgets/app_header.dart';
 
+/// Tab "Tổng quan". Phần đầu theo Top Bar của `DashboardScreen.tsx` bên RN.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Mẹ có chắc muốn đăng xuất khỏi Mom Ơi không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.rose),
+            child: const Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await _logout(context);
+  }
 
   Future<void> _logout(BuildContext context) async {
     try {
@@ -34,60 +61,59 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trang chủ'),
-        centerTitle: true,
-      ),
-
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+    return ColoredBox(
+      color: MomTheme.cream,
+      child: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.check_circle,
-                size: 80,
-                color: Colors.green,
+              AppHeader(
+                onNotificationsTap: () {
+                  // TODO: màn Thông báo
+                },
+                onLogoutTap: () => _confirmLogout(context),
               ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-                'Đăng nhập thành công!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              const Text(
-                'Bạn đã đăng nhập vào MomOi.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              SizedBox(
+              const SizedBox(height: 20),
+              Container(
                 width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: () => _logout(context),
-                  icon: const Icon(Icons.logout),
-                  label: const Text(
-                    'Đăng xuất',
-                    style: TextStyle(
-                      fontSize: 16,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 56,
+                      color: AppColors.secondary,
                     ),
-                  ),
+                    SizedBox(height: 12),
+                    Text(
+                      'Đăng nhập thành công!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Bạn đã đăng nhập vào MomOi.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 14,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -97,4 +123,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-

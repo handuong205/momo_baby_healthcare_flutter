@@ -29,8 +29,16 @@ class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
   double? _height;
   List<String> _allergies = [];
 
-  String get _apiGender {
-    return _gender == 'Bé trai' ? 'Male' : 'Female';
+  /// Hồ sơ bé đã tạo ở lần bấm trước (API 2 lỗi) thì không tạo lại để tránh trùng.
+  bool _babyProfileSaved = false;
+
+  // Backend nhận giới tính dạng số: 0 = bé trai, 1 = bé gái (giống RN).
+  int get _apiGender {
+    return _gender == 'Bé trai' ? 0 : 1;
+  }
+
+  String get _apiDeliveryType {
+    return _deliveryMethod == 'Sinh mổ' ? 'cesarean' : 'natural';
   }
 
   void _handleBack() {
@@ -47,20 +55,23 @@ class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
   setState(() => _isLoading = true);
 
   try {
-    // 1. Lưu hồ sơ em bé.
-    await PostpartumRepository.saveBabyProfile(
-      babyName: _babyName.trim(),
-      dateOfBirth: _birthDate,
-      gender: _apiGender,
-      currentWeightKg: _weight,
-      currentHeightCm: _height,
-      allergies: _allergies,
-    );
+    // 1. Lưu hồ sơ em bé (bỏ qua nếu lần trước đã lưu thành công).
+    if (!_babyProfileSaved) {
+      await PostpartumRepository.saveBabyProfile(
+        babyName: _babyName.trim(),
+        dateOfBirth: _birthDate,
+        gender: _apiGender,
+        currentWeightKg: _weight,
+        currentHeightCm: _height,
+        allergies: _allergies,
+      );
+      _babyProfileSaved = true;
+    }
 
     // 2. Thiết lập thông tin sau sinh.
     final setup = await PostpartumRepository.setupPostpartum(
       deliveryDate: _birthDate,
-      deliveryType: _deliveryMethod,
+      deliveryType: _apiDeliveryType,
       isBreastfeeding: _isBreastfeeding,
     );
 
