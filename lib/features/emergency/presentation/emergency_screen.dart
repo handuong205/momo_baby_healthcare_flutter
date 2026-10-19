@@ -194,24 +194,22 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     }
   }
 
-  /// Gửi tín hiệu cần hỗ trợ lên backend để Care Staff liên hệ lại, khi mẹ
-  /// chưa gọi được 115 hoặc không nguy cấp tới mức phải gọi cấp cứu.
+  /// Ghi nhận sự cố (kèm vị trí) vào lịch sử khẩn cấp mà không gọi 115, để
+  /// mẹ có mốc thời gian kể lại cho bác sĩ khi đi khám.
   Future<void> sendSignal() async {
     setState(() => sendingSignal = true);
     try {
       await repository.report(
-        'Mẹ cần hỗ trợ y tế, gửi tín hiệu lúc $_nowHhmm.$_where',
+        'Mẹ ghi nhận dấu hiệu cần hỗ trợ y tế lúc $_nowHhmm.$_where',
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã gửi tín hiệu. Care Staff sẽ liên hệ mẹ sớm.'),
-        ),
+        const SnackBar(content: Text('Đã ghi nhận vào lịch sử khẩn cấp.')),
       );
       await loadHistory();
     } catch (e) {
       if (mounted) {
-        await showMomAlert(context, 'Chưa gửi được', apiErrorMessage(e));
+        await showMomAlert(context, 'Chưa ghi nhận được', apiErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => sendingSignal = false);
@@ -279,8 +277,8 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             const SizedBox(height: 8),
             MomSecondaryButton(
               label: sendingSignal
-                  ? 'Đang gửi…'
-                  : 'Gửi tín hiệu cho Care Staff',
+                  ? 'Đang ghi nhận…'
+                  : 'Ghi nhận sự cố (không gọi)',
               icon: LucideIcons.bellRing,
               onPressed: sendingSignal ? null : sendSignal,
             ),
@@ -436,7 +434,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       const SizedBox(height: 18),
       MomSectionTitle(
         title: 'Lịch sử khẩn cấp',
-        subtitle: 'Đã lưu trên hệ thống, Care Staff cùng theo dõi',
+        subtitle: 'Đã lưu trên hệ thống, xem lại được trong Thông báo',
         right: IconButton(
           tooltip: 'Tải lại',
           onPressed: loadHistory,

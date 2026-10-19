@@ -30,7 +30,7 @@ class EmergencyEvent {
 }
 
 /// Ghi lại sự kiện khẩn cấp vào hệ thống cảnh báo của backend (`/api/alerts`)
-/// để lịch sử hiện trong Thông báo và Care Staff theo dõi được.
+/// để lịch sử hiện trong màn Khẩn cấp và mục Thông báo.
 class EmergencyRepository {
   EmergencyRepository(this.client);
 

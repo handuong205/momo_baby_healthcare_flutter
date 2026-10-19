@@ -52,6 +52,13 @@ String formatDate(DateTime? d) =>
 
 String formatTime(TimeOfDay t) => '${_pad(t.hour)}:${_pad(t.minute)}';
 
+AdherenceStatus? _parseStatus(Object? value) =>
+    switch (value?.toString().toLowerCase()) {
+      'taken' => AdherenceStatus.taken,
+      'skipped' => AdherenceStatus.skipped,
+      _ => null,
+    };
+
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
@@ -88,12 +95,16 @@ class CareSchedule {
 
   bool get isOneDay => endDate.difference(startDate).inDays <= 1;
 
+  /// Ngày cuối cùng còn hiệu lực ([endDate] không tính, giống backend).
+  DateTime get lastDay => endDate.subtract(const Duration(days: 1));
+
   String get dateRange => isOneDay
       ? 'Ngày ${formatDate(startDate)}'
-      : '${formatDate(startDate)} → ${formatDate(endDate)}';
+      : '${formatDate(startDate)} → ${formatDate(lastDay)}';
 
+  /// Lịch chạy trong [startDate, endDate): chọn "30 ngày" là đúng 30 ngày.
   bool activeOn(DateTime day) =>
-      !day.isBefore(startDate) && !day.isAfter(endDate);
+      !day.isBefore(startDate) && day.isBefore(endDate);
 
   /// Trạng thái hôm nay (backend ghi theo ngày, không theo từng giờ).
   AdherenceStatus? statusOn(DateTime day) {
@@ -119,13 +130,13 @@ class CareSchedule {
         for (final log
             in (json['adherenceLogs'] as List? ?? const [])
                 .whereType<Map<String, dynamic>>())
-          if (fromUtcDateIso(log['date']) case final date?)
-            (
-              date: date,
-              status: log['status']?.toString().toLowerCase() == 'skipped'
-                  ? AdherenceStatus.skipped
-                  : AdherenceStatus.taken,
-            ),
+          // Bỏ log `Reminded` (backend tự ghi khi đã gửi nhắc), chỉ giữ
+          // trạng thái mẹ tự đánh dấu.
+          if ((fromUtcDateIso(log['date']), _parseStatus(log['status'])) case (
+            final date?,
+            final status?,
+          ))
+            (date: date, status: status),
       ],
     );
   }
