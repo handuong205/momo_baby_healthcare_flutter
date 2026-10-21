@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/baby/baby_screen.dart';
 import 'app_bottom_nav.dart';
 
 /// Khung chính sau đăng nhập, theo `TabNavigator.tsx` bên RN:
@@ -17,11 +18,13 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
 
-  // Thứ tự khớp với AppBottomNav.items. Tab chưa làm dùng màn tạm.
+  // Thứ tự khớp với AppBottomNav.items.
   final List<Widget> _screens = [
     const HomeScreen(),
-    for (final item in AppBottomNav.items.skip(1))
-      _ComingSoonTab(title: item.label, icon: item.activeIcon),
+    const _ComingSoonTab(title: 'Lộ trình', icon: Icons.monitor_heart_rounded),
+    const BabyScreen(),
+    const _ComingSoonTab(title: 'AI', icon: Icons.show_chart_rounded),
+    const _ComingSoonTab(title: 'Menu', icon: Icons.grid_view_rounded),
   ];
 
   @override
