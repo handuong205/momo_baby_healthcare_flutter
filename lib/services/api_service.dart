@@ -1,4 +1,7 @@
 import 'package:dio/dio.dart';
+
+import 'dart:convert';
+
 import 'package:momo_baby_healthcare_flutter/config/app_config.dart';
 
 import '../exceptions/api_exception.dart';
@@ -45,9 +48,14 @@ class ApiService {
   static Future<Response> get(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
+    ResponseType? responseType,
   }) async {
     try {
-      return await dio.get(endpoint, queryParameters: queryParameters);
+      return await dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+        options: Options(responseType: responseType),
+      );
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -59,13 +67,19 @@ class ApiService {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     bool requiresAuth = true,
+    ResponseType? responseType,
+    String? contentType,
   }) async {
     try {
       return await dio.post(
         endpoint,
         data: data,
         queryParameters: queryParameters,
-        options: Options(extra: {'requiresAuth': requiresAuth}),
+        options: Options(
+          extra: {'requiresAuth': requiresAuth},
+          responseType: responseType,
+          contentType: contentType,
+        ),
       );
     } on DioException catch (e) {
       throw _handleError(e);
@@ -127,8 +141,16 @@ class ApiService {
   static ApiException _handleError(DioException e) {
     final response = e.response;
 
-    if (response != null && response.data is Map) {
-      final data = Map<String, dynamic>.from(response.data);
+    dynamic rawData = response?.data;
+    if (rawData is List<int>) {
+      try {
+        rawData = jsonDecode(utf8.decode(rawData));
+      } catch (_) {
+        rawData = null;
+      }
+    }
+    if (rawData is Map) {
+      final data = Map<String, dynamic>.from(rawData);
 
       final message = data['message']?.toString() ?? 'Đã xảy ra lỗi.';
 
@@ -142,7 +164,7 @@ class ApiService {
         message: message,
         errors: errors,
         errorCode: errorCode,
-        statusCode: response.statusCode,
+        statusCode: response?.statusCode,
       );
     }
 
