@@ -27,4 +27,16 @@ void main() {
     expect(profile.babyName, 'Bơ');
     expect(profile.growthRecords.single.weightKg, 7.8);
   });
+
+  test('parses optional hasPhoto and defaults it to false when missing', () {
+    final withPhoto = BabyProfile.fromJson({
+      'id': 1,
+      'babyName': 'Bơ',
+      'hasPhoto': true,
+    });
+    final withoutPhoto = BabyProfile.fromJson({'id': 2, 'babyName': 'Na'});
+
+    expect(withPhoto.hasPhoto, isTrue);
+    expect(withoutPhoto.hasPhoto, isFalse);
+  });
 }

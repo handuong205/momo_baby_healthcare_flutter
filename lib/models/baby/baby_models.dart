@@ -13,9 +13,8 @@ class GrowthRecord {
 
   factory GrowthRecord.fromJson(Map<String, dynamic> json) => GrowthRecord(
         id: _int(json['id']),
-        recordedAt: DateTime.tryParse(
-              '${json['recordedAt'] ?? json['date'] ?? ''}',
-            ) ??
+    recordedAt:
+        DateTime.tryParse('${json['recordedAt'] ?? json['date'] ?? ''}') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
         weightKg: _double(json['weightKg'] ?? json['weight_kg']),
         heightCm: _double(json['heightCm'] ?? json['height_cm']),
@@ -34,6 +33,7 @@ class BabyProfile {
   final List<String> allergies;
   final List<String> foodHistory;
   final List<GrowthRecord> growthRecords;
+  final bool hasPhoto;
 
   const BabyProfile({
     required this.id,
@@ -47,7 +47,23 @@ class BabyProfile {
     required this.allergies,
     required this.foodHistory,
     required this.growthRecords,
+    this.hasPhoto = false,
   });
+
+  BabyProfile copyWith({bool? hasPhoto}) => BabyProfile(
+    id: id,
+    userId: userId,
+    babyName: babyName,
+    dateOfBirth: dateOfBirth,
+    gender: gender,
+    currentWeightKg: currentWeightKg,
+    currentHeightCm: currentHeightCm,
+    ageMonths: ageMonths,
+    allergies: allergies,
+    foodHistory: foodHistory,
+    growthRecords: growthRecords,
+    hasPhoto: hasPhoto ?? this.hasPhoto,
+  );
 
   bool get isBoy =>
       gender.toLowerCase() == 'male' ||
@@ -58,7 +74,8 @@ class BabyProfile {
         id: _int(json['id']),
         userId: '${json['userId'] ?? json['user_id'] ?? ''}',
         babyName: '${json['babyName'] ?? json['baby_name'] ?? ''}',
-        dateOfBirth: DateTime.tryParse(
+    dateOfBirth:
+        DateTime.tryParse(
               '${json['dateOfBirth'] ?? json['date_of_birth'] ?? ''}',
             ) ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
@@ -72,9 +89,8 @@ class BabyProfile {
         ageMonths: _int(json['ageMonths'] ?? json['age_months']),
         allergies: _strings(json['allergies']),
         foodHistory: _strings(json['foodHistory'] ?? json['food_history']),
-        growthRecords: _growthList(
-          json['growthRecords'] ?? json['growth_records'],
-        ),
+    growthRecords: _growthList(json['growthRecords'] ?? json['growth_records']),
+    hasPhoto: json['hasPhoto'] == true || json['has_photo'] == true,
       );
 }
 
@@ -94,10 +110,8 @@ class GrowthEvaluation {
   factory GrowthEvaluation.fromJson(Map<String, dynamic> json) =>
       GrowthEvaluation(
         isHealthy: json['isHealthy'] == true || json['is_healthy'] == true,
-        weightStatus:
-            '${json['weightStatus'] ?? json['weight_status'] ?? ''}',
-        heightStatus:
-            '${json['heightStatus'] ?? json['height_status'] ?? ''}',
+        weightStatus: '${json['weightStatus'] ?? json['weight_status'] ?? ''}',
+        heightStatus: '${json['heightStatus'] ?? json['height_status'] ?? ''}',
         feedback: '${json['feedback'] ?? ''}',
       );
 }
@@ -175,7 +189,8 @@ class WeeklyMenu {
       );
 }
 
-int _int(dynamic value) => value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+int _int(dynamic value) =>
+    value is num ? value.toInt() : int.tryParse('$value') ?? 0;
 double _double(dynamic value) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
 double? _nullableDouble(dynamic value) => value == null ? null : _double(value);
@@ -184,16 +199,21 @@ String _gender(dynamic value) {
   final text = '$value';
   return text.toLowerCase() == 'boy' ? 'Male' : text;
 }
+
 List<String> _strings(dynamic value) =>
     value is List ? value.map((item) => '$item').toList() : const [];
 Map<String, double> _numberMap(dynamic value) => value is Map
     ? value.map((key, item) => MapEntry('$key', _double(item)))
     : const {};
 Map<String, MealItem?> _mealMap(dynamic value) => value is Map
-    ? value.map((key, item) => MapEntry(
+    ? value.map(
+        (key, item) => MapEntry(
           '$key',
-          item is Map ? MealItem.fromJson(Map<String, dynamic>.from(item)) : null,
-        ))
+          item is Map
+              ? MealItem.fromJson(Map<String, dynamic>.from(item))
+              : null,
+        ),
+      )
     : const {};
 List<GrowthRecord> _growthList(dynamic value) => value is List
     ? value
