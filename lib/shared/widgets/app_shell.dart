@@ -3,6 +3,7 @@ import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/screens/ai/symptom_check_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/baby/baby_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/tools/tools_screen.dart';
 import 'app_bottom_nav.dart';
 
 /// Khung chính sau đăng nhập, theo `TabNavigator.tsx` bên RN:
@@ -25,7 +26,7 @@ class _AppShellState extends State<AppShell> {
     const _ComingSoonTab(title: 'Lộ trình', icon: Icons.monitor_heart_rounded),
     const BabyScreen(),
     const SymptomCheckScreen(), // Tab "AI": màn 10–12
-    const _ComingSoonTab(title: 'Menu', icon: Icons.grid_view_rounded),
+    const ToolsScreen(), // Tab "Menu": màn 13–15
   ];
 
   @override
