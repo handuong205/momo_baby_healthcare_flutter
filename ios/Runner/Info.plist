@@ -70,6 +70,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Mom Ơi! dùng vị trí để tìm cơ sở y tế gần mẹ và gửi kèm khi gọi cấp cứu.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mom Ơi! dùng micro để mẹ nói triệu chứng thay vì gõ.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
@@ -78,6 +80,7 @@
 	<array>
 		<string>tel</string>
 		<string>https</string>
+		<string>comgooglemaps</string>
 	</array>
 </dict>
 </plist>
