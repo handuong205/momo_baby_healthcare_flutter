@@ -5,9 +5,9 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Ứng dụng cần camera để chụp ảnh đại diện cho bé.</string>
+	<string>Ứng dụng cần camera để chụp ảnh cho bé và chụp ảnh triệu chứng gửi AI phân tích.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Ứng dụng cần quyền thư viện ảnh để chọn ảnh đại diện cho bé.</string>
+	<string>Ứng dụng cần quyền thư viện ảnh để chọn ảnh cho bé và ảnh triệu chứng.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -69,6 +69,15 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mom Ơi! dùng micro để mẹ nói triệu chứng thay vì gõ.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Mom Ơi! chuyển giọng nói của mẹ thành chữ để mô tả triệu chứng.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>https</string>
 	</array>
 </dict>
 </plist>

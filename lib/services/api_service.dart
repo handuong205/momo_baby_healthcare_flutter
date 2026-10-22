@@ -62,6 +62,7 @@ class ApiService {
   }
 
   // POST request
+  // [timeout]: chỉ truyền cho request chậm (vd. gọi AI Gemini mất 10–30 giây).
   static Future<Response> post(
     String endpoint, {
     dynamic data,
@@ -69,6 +70,7 @@ class ApiService {
     bool requiresAuth = true,
     ResponseType? responseType,
     String? contentType,
+    Duration? timeout,
   }) async {
     try {
       return await dio.post(
@@ -79,6 +81,8 @@ class ApiService {
           extra: {'requiresAuth': requiresAuth},
           responseType: responseType,
           contentType: contentType,
+          receiveTimeout: timeout,
+          sendTimeout: timeout,
         ),
       );
     } on DioException catch (e) {

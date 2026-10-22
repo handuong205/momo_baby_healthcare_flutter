@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/screens/ai/symptom_check_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/baby/baby_screen.dart';
 import 'app_bottom_nav.dart';
@@ -23,7 +24,7 @@ class _AppShellState extends State<AppShell> {
     const HomeScreen(),
     const _ComingSoonTab(title: 'Lộ trình', icon: Icons.monitor_heart_rounded),
     const BabyScreen(),
-    const _ComingSoonTab(title: 'AI', icon: Icons.show_chart_rounded),
+    const SymptomCheckScreen(), // Tab "AI": màn 10–12
     const _ComingSoonTab(title: 'Menu', icon: Icons.grid_view_rounded),
   ];
 
