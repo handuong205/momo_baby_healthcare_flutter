@@ -120,4 +120,12 @@ class MomTheme {
   static const Color white = Color(0xFFFFFFFF);
   static const Color border = Color(0xFFEFE7DC);
   static const Color borderSoft = Color(0xFFF3EDE4);
+
+  // Màu cho Lịch chăm sóc / Khẩn cấp / Thư giãn (RN: MOM_THEME).
+  static const Color danger = Color(0xFFD95368);
+  static const Color dangerLight = Color(0xFFFDECEF);
+  static const Color dangerBorder = Color(0xFFFECACA);
+  static const Color emergency = Color(0xFFD92D20);
+  static const Color purple = Color(0xFF8E6BB8);
+  static const Color blue = Color(0xFF4A88C7);
 }

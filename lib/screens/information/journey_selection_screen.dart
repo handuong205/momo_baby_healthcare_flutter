@@ -13,17 +13,32 @@ import 'package:momo_baby_healthcare_flutter/screens/information/widget/mom_jour
 
 import 'package:momo_baby_healthcare_flutter/screens/information/pre_pregnancy_screen.dart';
 
-enum PregnancyStage { prePregnancy, pregnancy, postpartum }
+enum PregnancyStage {
+  prePregnancy('Chuẩn bị mang thai'),
+  pregnancy('Đang mang thai'),
+  postpartum('Bé đã chào đời');
+
+  const PregnancyStage(this.label);
+
+  final String label;
+}
 
 class JourneySelectionScreen extends StatefulWidget {
-  const JourneySelectionScreen({super.key});
+  /// Lộ trình mẹ đang theo dõi. Khác `null` khi mở lại từ trang chủ:
+  /// hiện nút back, chọn sẵn lộ trình này và hỏi xác nhận trước khi đổi.
+  final PregnancyStage? currentStage;
+
+  const JourneySelectionScreen({super.key, this.currentStage});
 
   @override
   State<JourneySelectionScreen> createState() => _JourneySelectionScreenState();
 }
 
 class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
-  PregnancyStage _selectedStage = PregnancyStage.prePregnancy;
+  late PregnancyStage _selectedStage =
+      widget.currentStage ?? PregnancyStage.prePregnancy;
+
+  bool get _isChanging => widget.currentStage != null;
 
   final TextEditingController _nicknameController = TextEditingController(
     text: 'Bé Bắp',
@@ -43,8 +58,41 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
     });
   }
 
+  Future<bool> _confirmChange() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Thay đổi lộ trình?'),
+        content: Text(
+          'Mẹ có chắc muốn chuyển từ "${widget.currentStage!.label}" '
+          'sang "${_selectedStage.label}" không?\n\n'
+          'MomOi sẽ cập nhật lại thực đơn, lời khuyên và lộ trình theo giai đoạn mới.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.primaryDark),
+            child: const Text('Thay đổi'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
   Future<void> _continue() async {
   if (_isLoading) return;
+
+  if (_isChanging) {
+    // Vẫn giữ lộ trình cũ thì không cần đổi.
+    if (_selectedStage == widget.currentStage) return;
+    if (!await _confirmChange() || !mounted) return;
+  }
 
   final stage = switch (_selectedStage) {
     PregnancyStage.prePregnancy => 'PrePregnancy',
@@ -120,9 +168,28 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                 child: Column(
                   children: [
                     const SizedBox(height: 8),
-                    const SizedBox(height: 8),
+                    if (_isChanging)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          tooltip: 'Quay lại',
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.of(context).maybePop(),
+                          style: IconButton.styleFrom(
+                            backgroundColor: AppColors.surface,
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                      )
+                    else
+                      const SizedBox(height: 8),
 
-                    const JourneyHeader(),
+                    JourneyHeader(isChanging: _isChanging),
 
                     const SizedBox(height: 20),
 
@@ -132,6 +199,7 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                     JourneyCard(
                       stage: PregnancyStage.prePregnancy,
                       selectedStage: _selectedStage,
+                      isCurrent: widget.currentStage == PregnancyStage.prePregnancy,
                       emoji: '🌸',
                       title: 'Chuẩn bị mang thai',
                       description: 'Theo dõi chu kỳ kinh nguyệt, tính ngày rụng trứng tối ưu để sẵn sàng đón tin vui.',
@@ -149,6 +217,7 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                     JourneyCard(
                       stage: PregnancyStage.pregnancy,
                       selectedStage: _selectedStage,
+                      isCurrent: widget.currentStage == PregnancyStage.pregnancy,
                       emoji: '🤰',
                       title: 'Đang mang thai',
                       description: 'Đồng hành theo dõi tuần thai, dinh dưỡng mẹ bầu và chuẩn bị sinh trọn gói.',
@@ -167,6 +236,7 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                     JourneyCard(
                       stage: PregnancyStage.postpartum,
                       selectedStage: _selectedStage,
+                      isCurrent: widget.currentStage == PregnancyStage.postpartum,
                       emoji: '👶',
                       title: 'Bé đã chào đời',
                       description: 'Theo dõi cân nặng, chiều cao WHO, cữ bú, giấc ngủ và thực đơn ăn dặm cho bé.',
@@ -184,8 +254,18 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                     const SizedBox(height: 16),
 
                     JourneyBottomAction(
-                      onPressed: _isLoading ? null : _continue,
+                      onPressed: _isLoading ||
+                              (_isChanging &&
+                                  _selectedStage == widget.currentStage)
+                          ? null
+                          : _continue,
                       isLoading: _isLoading,
+                      label: !_isChanging
+                          ? 'Tiếp tục'
+                          : _selectedStage == widget.currentStage
+                              ? 'Đang theo dõi lộ trình này'
+                              : 'Đổi sang lộ trình này',
+                      showHint: !_isChanging,
                     ),
 
                     const SizedBox(height: 16),

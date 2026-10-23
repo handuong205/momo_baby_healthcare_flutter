@@ -21,6 +21,7 @@ class AuthRepository {
       token: result.token,
       refreshToken: result.refreshToken,
     );
+    await TokenService.saveUserName(result.user.fullName);
 
     return result;
   }
@@ -40,6 +41,7 @@ class AuthRepository {
       token: result.token,
       refreshToken: result.refreshToken,
     );
+    await TokenService.saveUserName(result.user.fullName ?? request.fullName);
 
     return result;
   }

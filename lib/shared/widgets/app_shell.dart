@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/screens/ai/symptom_check_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/baby/baby_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/tools/tools_screen.dart';
 import 'app_bottom_nav.dart';
 
 /// Khung chính sau đăng nhập, theo `TabNavigator.tsx` bên RN:
@@ -17,17 +20,18 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
 
-  // Thứ tự khớp với AppBottomNav.items. Tab chưa làm dùng màn tạm.
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    for (final item in AppBottomNav.items.skip(1))
-      _ComingSoonTab(title: item.label, icon: item.activeIcon),
+  // Các tab sau Tổng quan; thứ tự khớp với AppBottomNav.items.
+  final List<Widget> _otherTabs = [
+    const _ComingSoonTab(title: 'Lộ trình', icon: Icons.monitor_heart_rounded),
+    const BabyScreen(),
+    const SymptomCheckScreen(), // Tab "AI": màn 10–12
+    const ToolsScreen(), // Tab "Menu": màn 13–15
   ];
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, _screens.length - 1);
+    _currentIndex = widget.initialIndex.clamp(0, _otherTabs.length);
   }
 
   void _onNavTap(int index) {
@@ -40,7 +44,14 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MomTheme.cream,
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          // Trang chủ tải lại mỗi khi quay về tab (RN: useFocusEffect).
+          HomeScreen(onSelectTab: _onNavTap, isActive: _currentIndex == 0),
+          ..._otherTabs,
+        ],
+      ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
