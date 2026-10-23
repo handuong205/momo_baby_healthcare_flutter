@@ -1,4 +1,5 @@
 import 'package:momo_baby_healthcare_flutter/exceptions/api_unwrap.dart';
+import 'package:momo_baby_healthcare_flutter/models/pregnancy/pregnancy_models.dart';
 import 'package:momo_baby_healthcare_flutter/services/api_service.dart';
 
 /// Backend lưu lượng nước theo lít (2,5 lít = 100% mục tiêu), app hiển thị
@@ -101,27 +102,6 @@ class TodayMonitoring {
       waterCups: cupsFromLiters(log?['waterLiters'] as num?),
       moodScore: (log?['moodScore'] as num?)?.toInt(),
       sleepHours: log?['sleepHours'] as num?,
-    );
-  }
-}
-
-/// Thông tin tuần thai (`GET /api/pregnancy/this-week`).
-class PregnancyWeekInfo {
-  final int week;
-  final String? babySize;
-  final String? development;
-
-  const PregnancyWeekInfo({
-    required this.week,
-    this.babySize,
-    this.development,
-  });
-
-  factory PregnancyWeekInfo.fromJson(Map<String, dynamic> json) {
-    return PregnancyWeekInfo(
-      week: (json['week'] as num?)?.toInt() ?? 0,
-      babySize: json['babySize'] as String?,
-      development: json['development'] as String?,
     );
   }
 }

@@ -75,10 +75,11 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final message = await PregnancyRepository.setupPregnancy(
+      final result = await PregnancyRepository.setup(
         lastMenstrualPeriod: _lmpDate,
         dueDate: _manualEddDate,
       );
+      final message = result.milestone;
 
       if (!mounted) return;
 

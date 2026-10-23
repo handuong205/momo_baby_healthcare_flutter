@@ -4,6 +4,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/screens/care/care_schedule_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/emergency/emergency_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/fertility/ovulation_calendar_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/postpartum/epds_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/pregnancy/pregnancy_week_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/relax/relax_screen.dart';
 
 class _MenuItem {
@@ -33,6 +36,27 @@ final _utilityItems = [
     LucideIcons.headphones,
     MomTheme.purple,
     (_) => const RelaxScreen(),
+  ),
+];
+
+final _journeyItems = [
+  _MenuItem(
+    'Lịch rụng trứng',
+    LucideIcons.calendarHeart,
+    MomTheme.roseDark,
+    (_) => const OvulationCalendarScreen(),
+  ),
+  _MenuItem(
+    'Thai kỳ theo tuần',
+    LucideIcons.baby,
+    MomTheme.purple,
+    (_) => const PregnancyWeekScreen(),
+  ),
+  _MenuItem(
+    'Hồi phục & EPDS',
+    LucideIcons.brain,
+    MomTheme.sageDark,
+    (_) => const EpdsScreen(),
   ),
 ];
 
@@ -69,6 +93,7 @@ class ToolsScreen extends StatelessWidget {
           style: TextStyle(color: MomTheme.muted, fontSize: 13),
         ),
         const SizedBox(height: 18),
+        _Group('Hành trình của mẹ', _journeyItems),
         _Group('Tiện ích & An toàn', _utilityItems),
       ],
     ),

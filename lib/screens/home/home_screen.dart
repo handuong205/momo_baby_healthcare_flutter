@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/exceptions/api_exception.dart';
+import 'package:momo_baby_healthcare_flutter/models/pregnancy/pregnancy_models.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/dashboard/dashboard_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/fertility/ovulation_calendar_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/journey_selection_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/postpartum/epds_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/pregnancy/pregnancy_week_screen.dart';
 import 'package:momo_baby_healthcare_flutter/services/token_service.dart';
 import 'package:momo_baby_healthcare_flutter/shared/widgets/app_header.dart';
 import 'package:momo_baby_healthcare_flutter/shared/widgets/celebration_overlay.dart';
@@ -247,6 +251,16 @@ class _HomeScreenState extends State<HomeScreen> {
       );
   }
 
+  /// Thẻ lộ trình ở trang chủ mở đúng màn của giai đoạn hiện tại.
+  void _openStageFeature() {
+    final screen = switch (_profile?.stage ?? 0) {
+      1 => const PregnancyWeekScreen(),
+      2 => const EpdsScreen(),
+      _ => const OvulationCalendarScreen(),
+    };
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
   /// Mẹ đã thiết lập lộ trình thì mở ở chế độ xem / đổi lộ trình hiện tại,
   /// chưa thì mở màn chọn lộ trình như lúc mới đăng ký.
   Future<void> _openProfileSetup() async {
@@ -483,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     iconColor: _C.purple,
                     title: shortcut.title,
                     sub: shortcut.sub,
-                    onTap: _comingSoon,
+                    onTap: _openStageFeature,
                   ),
                 ),
                 const SizedBox(height: 24),
