@@ -3,6 +3,7 @@ import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/screens/ai/symptom_check_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/home/home_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/baby/baby_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/journey/journey_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/tools/tools_screen.dart';
 import 'app_bottom_nav.dart';
 
@@ -20,18 +21,10 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
 
-  // Các tab sau Tổng quan; thứ tự khớp với AppBottomNav.items.
-  final List<Widget> _otherTabs = [
-    const _ComingSoonTab(title: 'Lộ trình', icon: Icons.monitor_heart_rounded),
-    const BabyScreen(),
-    const SymptomCheckScreen(), // Tab "AI": màn 10–12
-    const ToolsScreen(), // Tab "Menu": màn 13–15
-  ];
-
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, _otherTabs.length);
+    _currentIndex = widget.initialIndex.clamp(0, 4);
   }
 
   void _onNavTap(int index) {
@@ -47,67 +40,18 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          // Trang chủ tải lại mỗi khi quay về tab (RN: useFocusEffect).
+          // Trang chủ và Lộ trình tải lại mỗi khi quay về tab
+          // (RN: useFocusEffect).
           HomeScreen(onSelectTab: _onNavTap, isActive: _currentIndex == 0),
-          ..._otherTabs,
+          JourneyScreen(isActive: _currentIndex == 1),
+          const BabyScreen(),
+          const SymptomCheckScreen(), // Tab "AI": màn 10–12
+          const ToolsScreen(), // Tab "Menu": màn 13–15
         ],
       ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
-      ),
-    );
-  }
-}
-
-class _ComingSoonTab extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _ComingSoonTab({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  color: MomTheme.pinkLight,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 30, color: MomTheme.roseDark),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: MomTheme.charcoal,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Tính năng đang được phát triển.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 13,
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

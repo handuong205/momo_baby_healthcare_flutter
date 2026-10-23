@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:momo_baby_healthcare_flutter/exceptions/api_error.dart';
+import 'package:momo_baby_healthcare_flutter/repositories/baby/baby_repository.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/baby/postpartum_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/baby_info/newborn_profile_card.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/baby_info/postpartum_info_card.dart';
@@ -20,7 +22,7 @@ class PostpartumSetupScreen extends StatefulWidget {
 class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
   bool _isLoading = false;
   bool _isCompleted = false;
-  DateTime _birthDate = DateTime(2026, 10, 8);
+  DateTime _birthDate = DateUtils.dateOnly(DateTime.now());
   String _gender = 'Bé gái';
   String _deliveryMethod = 'Sinh thường';
   bool _isBreastfeeding = true;
@@ -57,14 +59,25 @@ class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
   try {
     // 1. Lưu hồ sơ em bé (bỏ qua nếu lần trước đã lưu thành công).
     if (!_babyProfileSaved) {
-      await PostpartumRepository.saveBabyProfile(
-        babyName: _babyName.trim(),
-        dateOfBirth: _birthDate,
-        gender: _apiGender,
-        currentWeightKg: _weight,
-        currentHeightCm: _height,
-        allergies: _allergies,
-      );
+      // Đã có hồ sơ bé thì không tạo trùng. Đọc danh sách lỗi (ví dụ gói miễn
+      // phí bị chặn) thì bỏ qua bước kiểm tra, không chặn việc tạo hồ sơ.
+      // shortcut: mỗi mẹ chỉ một hồ sơ bé ở bước này; khi cần nhiều bé thì
+      // cho mẹ chọn hồ sơ trong màn Bé yêu.
+      var hasProfile = false;
+      try {
+        hasProfile = (await BabyRepository.getProfiles()).isNotEmpty;
+      } catch (_) {}
+
+      if (!hasProfile) {
+        await PostpartumRepository.saveBabyProfile(
+          babyName: _babyName.trim(),
+          dateOfBirth: _birthDate,
+          gender: _apiGender,
+          currentWeightKg: _weight,
+          currentHeightCm: _height,
+          allergies: _allergies,
+        );
+      }
       _babyProfileSaved = true;
     }
 
@@ -113,7 +126,9 @@ class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
     await AppResultDialog.showError(
       context,
       title: 'Không thể thiết lập',
-      message: 'Không thể lưu thông tin mẹ và bé. Vui lòng thử lại.',
+      // Hiện đúng lý do backend trả về (ví dụ: cần nâng cấp gói) thay vì câu
+      // chung chung, để mẹ biết phải làm gì tiếp.
+      message: ApiError.getErrorMessage(e),
       buttonText: 'Đóng',
     );
   }

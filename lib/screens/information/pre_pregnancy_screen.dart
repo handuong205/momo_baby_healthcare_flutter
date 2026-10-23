@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/models/information/pre_pregnancy/pre_pregnancy_request.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/fertility/fertility_repository.dart';
+import 'package:momo_baby_healthcare_flutter/repositories/user/user_profile.repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/pre_pregnancy/pre_pregnancy_header.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/pre_pregnancy/pre_pregnancy_cycle_card.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/pre_pregnancy/pre_pregnancy_fertility_card.dart';
@@ -16,7 +17,8 @@ class PrePregnancyScreen extends StatefulWidget {
 }
 
 class _PrePregnancyScreenState extends State<PrePregnancyScreen> {
-  DateTime _lastPeriodDate = DateTime(2026, 10, 1);
+  // Mặc định là hôm nay; mẹ chọn lại ngày kinh cuối thật.
+  DateTime _lastPeriodDate = DateUtils.dateOnly(DateTime.now());
 
   int _cycleLength = 28;
 
@@ -97,6 +99,10 @@ class _PrePregnancyScreenState extends State<PrePregnancyScreen> {
 
       // Gọi API lưu thông tin chu kỳ
       final result = await FertilityRepository.save(request);
+
+      // Chu kỳ đã lưu xong mới ghi giai đoạn, tránh hồ sơ "chuẩn bị mang thai"
+      // mà không có dữ liệu chu kỳ (backend không tự đổi stage ở API này).
+      await UserProfileRepository.chooseStageUserProfile('PrePregnancy');
 
       if (!mounted) return;
 
