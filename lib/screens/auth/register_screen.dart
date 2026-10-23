@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:momo_baby_healthcare_flutter/shared/widgets/app_logo.dart';
 
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/exceptions/api_error.dart';
@@ -246,9 +247,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Center(
                   child: Column(
                     children: [
-                      const Text('🌸', style: TextStyle(fontSize: 56)),
+                      const AppLogo(size: 88, borderWidth: 3),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       Text(
                         'Chào mừng Mẹ đến với MomOi',

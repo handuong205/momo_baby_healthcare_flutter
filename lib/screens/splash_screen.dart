@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
@@ -67,9 +68,28 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    // Cùng nền và logo với splash gốc (flutter_native_splash) để chuyển cảnh liền mạch.
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDF2F8),
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/logo/splash-icon.png',
+              width: 200,
+            ),
+            const SizedBox(height: 24),
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

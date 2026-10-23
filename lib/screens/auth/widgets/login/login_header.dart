@@ -48,10 +48,11 @@ class LoginHeader extends StatelessWidget {
                   color: AppColors.surface,
                 ),
                 child: ClipOval(
-                  child: Image.network(
-                    'https://lh3.googleusercontent.com/aida/AEtjO1WVwWhA_OZqvIk6FKZAioutBFv2lR0p4B58JSQeA7N9siOcfov_G9CSIlOlkWIsO4yU9H0jBPqIpz2YkXWu57LWiEMp-mQJOAqhrwDldoZ6bYlxNdVHd6YX947UvW3-ofsgUF5Io1KsAMleZA55PFcCZyvV2WTfNUKBSOBGHkjzYZqWK3P69oTQl24JpttzSaf4VgqU_qZq_l5I5hohKPyI2abFHURigPg6H_j273uKr9RzXUHwftU4eCk',
+                  // Logo app, cùng file với bản React Native (assets/icon.png).
+                  child: Image.asset(
+                    'assets/images/logo/icon.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) {
+                    errorBuilder: (_, _, _) {
                       return const Icon(
                         Icons.favorite,
                         color: AppColors.primary,

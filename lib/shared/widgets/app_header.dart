@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
+import 'package:momo_baby_healthcare_flutter/shared/widgets/app_logo.dart';
 
 /// Thanh trên cùng của màn Tổng quan, theo "Top Bar" trong
 /// `DashboardScreen.tsx` bên React Native: avatar 🌸, lời chào,
@@ -36,17 +37,7 @@ class AppHeader extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             child: Row(
               children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: MomTheme.pink,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: MomTheme.white, width: 2),
-                  ),
-                  child: const Text('🌸', style: TextStyle(fontSize: 22)),
-                ),
+                const AppLogo(size: 46),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
