@@ -20,9 +20,8 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   late int _currentIndex;
 
-  // Thứ tự khớp với AppBottomNav.items.
-  final List<Widget> _screens = [
-    const HomeScreen(),
+  // Các tab sau Tổng quan; thứ tự khớp với AppBottomNav.items.
+  final List<Widget> _otherTabs = [
     const _ComingSoonTab(title: 'Lộ trình', icon: Icons.monitor_heart_rounded),
     const BabyScreen(),
     const SymptomCheckScreen(), // Tab "AI": màn 10–12
@@ -32,7 +31,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, _screens.length - 1);
+    _currentIndex = widget.initialIndex.clamp(0, _otherTabs.length);
   }
 
   void _onNavTap(int index) {
@@ -45,7 +44,14 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MomTheme.cream,
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          // Trang chủ tải lại mỗi khi quay về tab (RN: useFocusEffect).
+          HomeScreen(onSelectTab: _onNavTap, isActive: _currentIndex == 0),
+          ..._otherTabs,
+        ],
+      ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,

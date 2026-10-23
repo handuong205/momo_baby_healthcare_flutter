@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 
 class JourneyHeader extends StatelessWidget {
-  const JourneyHeader({super.key});
+  /// `true` khi mẹ đã có lộ trình và mở lại màn này để xem / đổi.
+  final bool isChanging;
+
+  const JourneyHeader({super.key, this.isChanging = false});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +45,9 @@ class JourneyHeader extends StatelessWidget {
         const SizedBox(height: 8),
 
         Text(
-          'Chào Mẹ! Hãy chọn giai đoạn hiện tại của Mẹ nhé 🌷',
+          isChanging
+              ? 'Lộ trình hiện tại của Mẹ 🌷'
+              : 'Chào Mẹ! Hãy chọn giai đoạn hiện tại của Mẹ nhé 🌷',
           style: textTheme.headlineLarge?.copyWith(
             fontSize: 26,
             height: 1.3,
@@ -54,7 +59,9 @@ class JourneyHeader extends StatelessWidget {
         const SizedBox(height: 6),
 
         Text(
-          'MomOi sẽ cá nhân hóa thực đơn ăn uống, lời khuyên y khoa và bài học phát triển phù hợp nhất cho Mẹ & Bé.',
+          isChanging
+              ? 'Nếu hoàn cảnh đã thay đổi, Mẹ có thể chọn giai đoạn khác để MomOi cập nhật lộ trình cho phù hợp.'
+              : 'MomOi sẽ cá nhân hóa thực đơn ăn uống, lời khuyên y khoa và bài học phát triển phù hợp nhất cho Mẹ & Bé.',
           style: textTheme.bodySmall?.copyWith(
             color: AppColors.textSecondary,
             height: 1.5,

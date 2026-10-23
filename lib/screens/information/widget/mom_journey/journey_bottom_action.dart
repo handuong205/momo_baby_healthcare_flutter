@@ -5,11 +5,15 @@ import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 class JourneyBottomAction extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
+  final String label;
+  final bool showHint;
 
   const JourneyBottomAction({
     super.key,
     required this.onPressed,
     this.isLoading = false,
+    this.label = 'Tiếp tục',
+    this.showHint = true,
   });
 
   @override
@@ -22,10 +26,7 @@ class JourneyBottomAction extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  AppColors.primaryContainer,
-                  AppColors.primaryDark,
-                ],
+                colors: [AppColors.primaryContainer, AppColors.primaryDark],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
@@ -57,9 +58,7 @@ class JourneyBottomAction extends StatelessWidget {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -71,33 +70,29 @@ class JourneyBottomAction extends StatelessWidget {
                       ),
                     ),
                   ] else ...[
-                    const Text(
-                      'Tiếp tục',
-                      style: TextStyle(
+                    Text(
+                      label,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(
-                      Icons.arrow_forward,
-                      size: 20,
-                    ),
+                    const Icon(Icons.arrow_forward, size: 20),
                   ],
                 ],
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Mẹ có thể thay đổi giai đoạn bất kỳ lúc nào trong Cài đặt.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
+        if (showHint) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'Mẹ có thể thay đổi giai đoạn bất kỳ lúc nào trong Cài đặt.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
-        ),
+        ],
       ],
     );
   }

@@ -16,6 +16,9 @@ class JourneyCard extends StatelessWidget {
   final bool popular;
   final bool isDisabled;
 
+  /// Đánh dấu giai đoạn mẹ đang theo dõi (khi mở lại để đổi lộ trình).
+  final bool isCurrent;
+
   final int? currentWeek;
   final DateTime? dueDate;
   final TextEditingController? nicknameController;
@@ -35,6 +38,7 @@ class JourneyCard extends StatelessWidget {
     required this.description,
     required this.onTap,
     this.popular = false,
+    this.isCurrent = false,
     this.currentWeek,
     this.dueDate,
     this.nicknameController,
@@ -101,7 +105,27 @@ class JourneyCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (popular)
+                              if (isCurrent)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secondaryLight,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: const Text(
+                                    'Lộ trình hiện tại',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.secondaryDark,
+                                    ),
+                                  ),
+                                )
+                              else if (popular)
                                 Container(
                                   margin: const EdgeInsets.only(bottom: 4),
                                   padding: const EdgeInsets.symmetric(
