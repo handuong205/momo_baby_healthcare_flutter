@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/exceptions/api_error.dart';
 import 'package:momo_baby_healthcare_flutter/exceptions/api_exception.dart';
-import 'package:momo_baby_healthcare_flutter/repositories/user/user_profile.repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/postpartum_setup_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/pregnancy_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/widget/mom_journey/journey_bottom_action.dart';
@@ -86,50 +85,34 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
   }
 
   Future<void> _continue() async {
-  if (_isLoading) return;
+    if (_isLoading) return;
 
-  if (_isChanging) {
-    // Vẫn giữ lộ trình cũ thì không cần đổi.
-    if (_selectedStage == widget.currentStage) return;
-    if (!await _confirmChange() || !mounted) return;
-  }
-
-  final stage = switch (_selectedStage) {
-    PregnancyStage.prePregnancy => 'PrePregnancy',
-    PregnancyStage.pregnancy => 'Pregnant',
-    PregnancyStage.postpartum => 'Postpartum',
-  };
-
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    await UserProfileRepository.chooseStageUserProfile(stage);
-
-    if (!mounted) return;
-
-    Widget nextScreen;
-
-    switch (_selectedStage) {
-      case PregnancyStage.prePregnancy:
-        nextScreen = const PrePregnancyScreen();
-        break;
-
-      case PregnancyStage.pregnancy:
-        nextScreen = const PregnancyScreen();
-        break;
-
-      case PregnancyStage.postpartum:
-        nextScreen = const PostpartumSetupScreen();
-        break;
+    // Đang theo dõi lộ trình này mà bấm tiếp = mở lại màn thiết lập để sửa
+    // thông tin (ngày kinh cuối, hồ sơ bé...), không đổi giai đoạn.
+    final isEditing = _isChanging && _selectedStage == widget.currentStage;
+    if (_isChanging && !isEditing) {
+      if (!await _confirmChange() || !mounted) return;
     }
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => nextScreen),
-    );
-  } on ApiException catch (e) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Không ghi `stage` ở đây: màn thiết lập của từng lộ trình tự ghi khi
+      // lưu thành công, để hồ sơ không bị "Pregnant" mà thiếu ngày kinh cuối
+      // khi mẹ thoát giữa chừng.
+      final nextScreen = switch (_selectedStage) {
+        PregnancyStage.prePregnancy => const PrePregnancyScreen(),
+        PregnancyStage.pregnancy => const PregnancyScreen(),
+        PregnancyStage.postpartum => const PostpartumSetupScreen(),
+      };
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => nextScreen),
+      );
+    } on ApiException catch (e) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -254,17 +237,13 @@ class _JourneySelectionScreenState extends State<JourneySelectionScreen> {
                     const SizedBox(height: 16),
 
                     JourneyBottomAction(
-                      onPressed: _isLoading ||
-                              (_isChanging &&
-                                  _selectedStage == widget.currentStage)
-                          ? null
-                          : _continue,
+                      onPressed: _isLoading ? null : _continue,
                       isLoading: _isLoading,
                       label: !_isChanging
                           ? 'Tiếp tục'
                           : _selectedStage == widget.currentStage
-                              ? 'Đang theo dõi lộ trình này'
-                              : 'Đổi sang lộ trình này',
+                          ? 'Cập nhật thông tin lộ trình này'
+                          : 'Đổi sang lộ trình này',
                       showHint: !_isChanging,
                     ),
 

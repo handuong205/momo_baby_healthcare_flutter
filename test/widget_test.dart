@@ -1,30 +1,35 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:momo_baby_healthcare_flutter/main.dart';
+import 'package:momo_baby_healthcare_flutter/models/postpartum/epds.dart';
+import 'package:momo_baby_healthcare_flutter/screens/postpartum/widget/epds_question_card.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('thẻ câu hỏi EPDS hiện 4 lựa chọn và báo câu đã chọn', (
+    tester,
+  ) async {
+    int? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: EpdsQuestionCard(
+              index: 0,
+              total: epdsQuestions.length,
+              question: epdsQuestions.first,
+              selected: null,
+              onSelected: (score) => picked = score,
+            ),
+          ),
+        ),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Câu 1/10'), findsOneWidget);
+    for (final option in epdsQuestions.first.options) {
+      expect(find.text(option), findsOneWidget);
+    }
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text(epdsQuestions.first.options[2]));
+    expect(picked, 2);
   });
 }

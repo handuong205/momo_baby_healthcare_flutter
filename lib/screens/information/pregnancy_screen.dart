@@ -21,8 +21,8 @@ class PregnancyScreen extends StatefulWidget {
 class _PregnancyScreenState extends State<PregnancyScreen> {
   static final DateTime _today = DateUtils.dateOnly(DateTime.now());
 
-  // Mặc định khoảng tuần thai 14, mẹ chọn lại ngày thật.
-  DateTime _lmpDate = _today.subtract(const Duration(days: 13 * 7 + 2));
+  // Mặc định là hôm nay (tuần 0); mẹ chọn lại ngày kinh cuối thật.
+  DateTime _lmpDate = _today;
 
   /// Null = mẹ không nhập, dùng ngày dự sinh tự tính và để backend tự tính.
   DateTime? _manualEddDate;
@@ -75,10 +75,11 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final message = await PregnancyRepository.setupPregnancy(
+      final result = await PregnancyRepository.setup(
         lastMenstrualPeriod: _lmpDate,
         dueDate: _manualEddDate,
       );
+      final message = result.milestone;
 
       if (!mounted) return;
 
