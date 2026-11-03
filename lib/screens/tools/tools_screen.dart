@@ -5,6 +5,8 @@ import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/screens/care/care_schedule_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/emergency/emergency_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/fertility/ovulation_calendar_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/payment/subscription_history_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/payment/upgrade_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/postpartum/epds_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/pregnancy/pregnancy_week_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/relax/relax_screen.dart';
@@ -60,6 +62,21 @@ final _journeyItems = [
   ),
 ];
 
+final _accountItems = [
+  _MenuItem(
+    'Gói dịch vụ',
+    LucideIcons.sparkles,
+    MomTheme.roseDark,
+    (_) => const UpgradeScreen(),
+  ),
+  _MenuItem(
+    'Lịch sử gói',
+    LucideIcons.receiptText,
+    MomTheme.sageDark,
+    (_) => const SubscriptionHistoryScreen(),
+  ),
+];
+
 /// Tab "Menu": tiện ích & an toàn (màn 13–15).
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
@@ -95,6 +112,7 @@ class ToolsScreen extends StatelessWidget {
         const SizedBox(height: 18),
         _Group('Hành trình của mẹ', _journeyItems),
         _Group('Tiện ích & An toàn', _utilityItems),
+        _Group('Tài khoản', _accountItems),
       ],
     ),
   );
