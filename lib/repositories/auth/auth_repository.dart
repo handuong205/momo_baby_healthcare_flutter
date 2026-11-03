@@ -47,29 +47,12 @@ class AuthRepository {
   }
 
   static Future<LoginResponse> refreshToken() async {
-    final refreshToken = await TokenService.getRefreshToken();
-
-    if (refreshToken == null || refreshToken.isEmpty) {
-      throw Exception('Refresh token không tồn tại');
-    }
-
-    final response = await ApiService.post(
-      '/api/auth/refresh',
-      data: {'refreshToken': refreshToken},
-      requiresAuth: false,
-    );
+    // Backend cấp token + refreshToken mới, ApiService đã lưu lại.
+    final response = await ApiService.refreshSession();
 
     final data = response.data['data'];
 
-    final result = LoginResponse.fromJson(data as Map<String, dynamic>);
-
-    // Backend cấp token + refreshToken mới
-    await TokenService.saveTokens(
-      token: result.token,
-      refreshToken: result.refreshToken,
-    );
-
-    return result;
+    return LoginResponse.fromJson(data as Map<String, dynamic>);
   }
 
   static Future<void> logout() async {

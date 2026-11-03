@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/care/care_schedule_repository.dart';
+import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/care/care_schedule_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/splash_screen.dart';
 import 'package:momo_baby_healthcare_flutter/services/care_reminder_service.dart';
@@ -23,6 +24,12 @@ Future<void> main() async {
   );
 
   ApiService.initialize();
+  ApiService.onSessionExpired = () {
+    navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  };
   await _initCareReminders();
 
   runApp(

@@ -1,4 +1,5 @@
 import 'package:momo_baby_healthcare_flutter/exceptions/api_unwrap.dart';
+import 'package:momo_baby_healthcare_flutter/models/monitoring/daily_monitoring.dart';
 import 'package:momo_baby_healthcare_flutter/models/pregnancy/pregnancy_models.dart';
 import 'package:momo_baby_healthcare_flutter/services/api_service.dart';
 
@@ -121,6 +122,43 @@ class DashboardRepository {
     // `data` có dạng { data: log | null, hasSubmittedToday }.
     final log = data?['data'];
     return TodayMonitoring.fromJson(log is Map<String, dynamic> ? log : null);
+  }
+
+  /// Nhật ký đầy đủ của hôm nay; `null` khi mẹ chưa ghi.
+  static Future<DailyMonitoringLog?> getTodayLog() async {
+    final response = await ApiService.get('/api/daily-monitoring/today');
+    final data = unwrapApiData<Map<String, dynamic>>(response.data);
+    final log = data?['data'];
+    return log is Map<String, dynamic> ? DailyMonitoringLog.fromJson(log) : null;
+  }
+
+  static Future<List<DailyMonitoringLog>> getMonitoringHistory({
+    int limit = 7,
+  }) async {
+    final response = await ApiService.get(
+      '/api/daily-monitoring/history',
+      queryParameters: {'limit': limit},
+    );
+    final data = unwrapApiData<List<dynamic>>(response.data) ?? const [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(DailyMonitoringLog.fromJson)
+        .toList();
+  }
+
+  /// `null` khi chưa có dữ liệu trong [days] ngày gần đây.
+  static Future<MonitoringInsights?> getMonitoringInsights({
+    int days = 7,
+  }) async {
+    final response = await ApiService.get(
+      '/api/daily-monitoring/insights',
+      queryParameters: {'days': days},
+    );
+    final data = unwrapApiData<Map<String, dynamic>>(response.data);
+    final insights = data?['insights'];
+    return insights is Map<String, dynamic>
+        ? MonitoringInsights.fromJson(insights)
+        : null;
   }
 
   /// Backend gộp theo ngày: chỉ ghi đè các trường được gửi lên.

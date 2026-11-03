@@ -6,8 +6,11 @@ import 'package:momo_baby_healthcare_flutter/models/pregnancy/pregnancy_models.d
 import 'package:momo_baby_healthcare_flutter/repositories/auth/auth_repository.dart';
 import 'package:momo_baby_healthcare_flutter/repositories/dashboard/dashboard_repository.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/login_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/care/care_schedule_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/fertility/ovulation_calendar_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/information/journey_selection_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/monitoring/daily_monitoring_screen.dart';
+import 'package:momo_baby_healthcare_flutter/screens/notifications/notifications_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/postpartum/epds_screen.dart';
 import 'package:momo_baby_healthcare_flutter/screens/pregnancy/pregnancy_week_screen.dart';
 import 'package:momo_baby_healthcare_flutter/services/token_service.dart';
@@ -243,12 +246,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _comingSoon() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Tính năng đang được phát triển.')),
-      );
+  /// Mở màn con, khi quay lại thì tải lại số liệu vừa ghi / số thông báo.
+  Future<void> _openAndReload(Widget screen) async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => screen));
+    if (mounted) await _loadAll();
   }
 
   /// Thẻ lộ trình ở trang chủ mở đúng màn của giai đoạn hiện tại.
@@ -363,7 +366,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   userName: _userName,
                   hasPendingAlerts: _pendingAlerts > 0,
                   onProfileTap: _openProfileSetup,
-                  onNotificationsTap: _comingSoon,
+                  onNotificationsTap: () =>
+                      _openAndReload(const NotificationsScreen()),
                   onLogoutTap: _confirmLogout,
                 ),
                 const SizedBox(height: 20),
@@ -414,7 +418,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? '${_formatNum(_sleepHours!)} giờ'
                               : '—',
                           label: 'Giấc ngủ',
-                          onTap: _comingSoon,
+                          onTap: () =>
+                              _openAndReload(const DailyMonitoringScreen()),
                           footer: _StatusPill(
                             text: _sleepHours != null ? 'Đã ghi' : 'Ghi nhận',
                             background: _C.sleepIconBg,
@@ -489,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     iconColor: MomTheme.amberDark,
                     title: 'Lịch uống thuốc',
                     sub: 'Vitamin, sắt, canxi mỗi ngày',
-                    onTap: _comingSoon,
+                    onTap: () => _openAndReload(const CareScheduleScreen()),
                   ),
                   right: _GridCard(
                     iconBackground: MomTheme.lavenderLight,
@@ -508,7 +513,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   moodScore: _moodScore,
                   onAddWater: _addWater,
                   onChooseMood: _chooseMood,
-                  onOpenFullLog: _comingSoon,
+                  onOpenFullLog: () =>
+                      _openAndReload(const DailyMonitoringScreen()),
                 ),
                 const SizedBox(height: 20),
 

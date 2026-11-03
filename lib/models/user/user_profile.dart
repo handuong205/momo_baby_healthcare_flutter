@@ -7,7 +7,7 @@ class UserProfile {
   final double? weight;
   final double? bloodSugarLevel;
   final bool hasGestDiabetes;
-  final String? medicalConditions;
+  final List<String>? medicalConditions;
   final int? avgCycleLength;
   final String? lastPeriodDate;
   final String? deliveryDate;
@@ -53,7 +53,9 @@ class UserProfile {
       weight: (json['weight'] as num?)?.toDouble(),
       bloodSugarLevel: (json['bloodSugarLevel'] as num?)?.toDouble(),
       hasGestDiabetes: json['hasGestDiabetes'] as bool? ?? false,
-      medicalConditions: json['medicalConditions'] as String?,
+      medicalConditions: (json['medicalConditions'] as List<dynamic>?)
+          ?.map((item) => item.toString())
+          .toList(),
       avgCycleLength: (json['avgCycleLength'] as num?)?.toInt(),
       lastPeriodDate: json['lastPeriodDate'] as String?,
       deliveryDate: json['deliveryDate'] as String?,

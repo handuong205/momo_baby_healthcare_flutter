@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:momo_baby_healthcare_flutter/core/colors/app_colors.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/register_screen.dart';
-import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/biometric_button.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/login_form.dart';
 import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/login_header.dart';
-import 'package:momo_baby_healthcare_flutter/screens/auth/widgets/login/social_login_section.dart';
 
 
 class LoginScreen extends StatelessWidget {
@@ -49,10 +47,8 @@ class LoginScreen extends StatelessWidget {
                   const LoginHeader(),
                   const SizedBox(height: 8),
                   const LoginForm(),
-                  const SizedBox(height: 12),
-                  const BiometricButton(),
                   const SizedBox(height: 20),
-                  SocialLoginSection(
+                  _RegisterPrompt(
   onRegister: () {
     Navigator.push(
       context,
@@ -104,6 +100,43 @@ class LoginScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RegisterPrompt extends StatelessWidget {
+  final VoidCallback onRegister;
+
+  const _RegisterPrompt({required this.onRegister});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Mẹ chưa có tài khoản?',
+          style: textTheme.bodySmall?.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        TextButton(
+          onPressed: onRegister,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.only(left: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            'Đăng ký ngay 💖',
+            style: textTheme.labelMedium?.copyWith(
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

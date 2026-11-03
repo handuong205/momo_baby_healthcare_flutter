@@ -17,9 +17,9 @@ class NewbornProfileCard extends StatefulWidget {
 }
 
 class _NewbornProfileCardState extends State<NewbornProfileCard> {
-  final _nameController = TextEditingController(text: 'Bé Bắp');
-  final _weightController = TextEditingController(text: '3.4');
-  final _heightController = TextEditingController(text: '50.0');
+  final _nameController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _heightController = TextEditingController();
   
   bool _isMultiSelect = true;
   String _gender = 'Bé gái';
@@ -36,8 +36,6 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
     _nameController.addListener(_notifyProfileChanged);
     _weightController.addListener(_notifyProfileChanged);
     _heightController.addListener(_notifyProfileChanged);
-    // Báo giá trị mặc định cho màn cha ngay từ đầu.
-    _notifyProfileChanged();
   }
 
   @override
@@ -206,9 +204,6 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                   controller: _weightController,
                   unit: 'kg',
                   icon: Icons.monitor_weight_outlined,
-                  badge: '',
-                  badgeColor: AppColors.mintLight,
-                  badgeTextColor: AppColors.secondary,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -221,9 +216,6 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                   controller: _heightController,
                   unit: 'cm',
                   icon: Icons.straighten_rounded,
-                  badge: '',
-                  badgeColor: AppColors.background,
-                  badgeTextColor: AppColors.textSecondary,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -382,9 +374,6 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
     required TextEditingController controller,
     required String unit,
     required IconData icon,
-    required String badge,
-    required Color badgeColor,
-    required Color badgeTextColor,
     required TextInputType keyboardType,
   }) {
     return Container(
@@ -423,6 +412,7 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                     color: AppColors.textPrimary,
                   ),
                   decoration: const InputDecoration(
+                    hintText: '0.0',
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -437,22 +427,6 @@ class _NewbornProfileCardState extends State<NewbornProfileCard> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-            decoration: BoxDecoration(
-              color: badgeColor,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              badge,
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: badgeTextColor,
-              ),
-            ),
           ),
         ],
       ),

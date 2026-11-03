@@ -17,7 +17,6 @@ class _LoginFormState extends State<LoginForm> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _rememberMe = true;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -212,52 +211,6 @@ class _LoginFormState extends State<LoginForm> {
             ),
             const SizedBox(height: 8),
           ],
-
-          // Remember + Forgot password
-          Row(
-            children: [
-              Checkbox(
-                value: _rememberMe,
-                onChanged: (value) {
-                  setState(() {
-                    _rememberMe = value ?? false;
-                  });
-                },
-                activeColor: AppColors.primary,
-                visualDensity: VisualDensity.compact,
-              ),
-
-              Expanded(
-                child: Text(
-                  'Ghi nhớ đăng nhập',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-
-              TextButton(
-                onPressed: () {
-                  // TODO: Forgot password
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Quên mật khẩu?',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
 
           // Login
           SizedBox(
