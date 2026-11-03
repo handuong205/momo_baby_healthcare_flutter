@@ -130,12 +130,13 @@ class ApiService {
     String endpoint, {
     Map<String, dynamic>? queryParameters,
     ResponseType? responseType,
+    Duration? timeout,
   }) async {
     try {
       return await dio.get(
         endpoint,
         queryParameters: queryParameters,
-        options: Options(responseType: responseType),
+        options: Options(responseType: responseType, receiveTimeout: timeout),
       );
     } on DioException catch (e) {
       throw _handleError(e);

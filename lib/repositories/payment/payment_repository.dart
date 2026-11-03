@@ -23,6 +23,8 @@ class PaymentRepository {
   static Future<PaymentStatusInfo> getStatus(String orderCode) async {
     final response = await ApiService.get(
       '/api/payment/status/${Uri.encodeComponent(orderCode)}',
+      // Backend phải gọi sang SePay nên có thể chậm; cùng mức 60 giây với bản web.
+      timeout: const Duration(seconds: 60),
     );
     return PaymentStatusInfo.fromJson(
       _data(response.data, 'Không kiểm tra được trạng thái thanh toán.'),

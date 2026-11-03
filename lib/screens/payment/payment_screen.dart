@@ -30,6 +30,7 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen>
     with WidgetsBindingObserver {
   static const _pollInterval = Duration(seconds: 4);
+  static const _maxSilentFailures = 3;
 
   late PaidTier _tier = widget.initialTier;
   int _months = 1;
@@ -39,6 +40,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _creating = false;
   bool _checking = false;
   bool _pollInFlight = false;
+  int _silentFailures = 0;
   String? _error;
   Timer? _pollTimer;
 
@@ -115,6 +117,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       final info = await PaymentRepository.getStatus(order.orderCode);
       // Mẹ đã đổi gói trong lúc chờ: kết quả này thuộc đơn cũ
       if (!mounted || !identical(order, _order)) return;
+      _silentFailures = 0;
 
       switch (info.status) {
         case PaymentStatus.completed:
@@ -134,8 +137,14 @@ class _PaymentScreenState extends State<PaymentScreen>
           }
       }
     } catch (e) {
-      // Lỗi mạng khi tự kiểm tra thì thử lại ở nhịp sau, không làm mẹ hoang mang
-      if (!silent && mounted) setState(() => _error = aiErrorMessage(e));
+      // Lỗi thoáng qua khi tự kiểm tra thì thử lại ở nhịp sau; lỗi lặp lại phải
+      // báo ra, nếu không mẹ đã chuyển tiền mà chỉ thấy "Chờ thanh toán" mãi.
+      _silentFailures = silent ? _silentFailures + 1 : 0;
+      if (mounted && (!silent || _silentFailures == _maxSilentFailures)) {
+        setState(
+          () => _error = 'Chưa kiểm tra được thanh toán: ${aiErrorMessage(e)}',
+        );
+      }
     } finally {
       _pollInFlight = false;
       if (!silent && mounted) setState(() => _checking = false);
