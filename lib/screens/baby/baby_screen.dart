@@ -41,11 +41,15 @@ class _BabyScreenState extends State<BabyScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  /// [silent]: tải lại ngầm sau khi màn con thay đổi dữ liệu, giữ nguyên nội
+  /// dung đang hiện và bỏ qua lỗi thay vì đổi cả trang sang vòng xoay.
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final profiles = await BabyRepository.getProfiles();
       if (!mounted) return;
@@ -60,12 +64,23 @@ class _BabyScreenState extends State<BabyScreen> {
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || silent) return;
       setState(() {
         _error = error;
         _loading = false;
       });
     }
+  }
+
+  Future<void> _openGrowth() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => GrowthScreen(profile: _selected!),
+      ),
+    );
+    // Màn biểu đồ có thể đã thêm/xóa số đo: cập nhật lại bản đang giữ ở đây,
+    // nếu không lần mở sau sẽ hiện dữ liệu cũ như thể số đo bị mất.
+    if (mounted) await _load(silent: true);
   }
 
   Future<void> _openProfileForm([BabyProfile? profile]) async {
@@ -166,11 +181,7 @@ class _BabyScreenState extends State<BabyScreen> {
                       ),
                       const SizedBox(height: 18),
                       _ActionGrid(
-                        onGrowth: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => GrowthScreen(profile: _selected!),
-                          ),
-                        ),
+                        onGrowth: _openGrowth,
                         onDaily: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) =>
@@ -201,7 +212,7 @@ class _BabyScreenState extends State<BabyScreen> {
       context: context,
       builder: (_) => GrowthEntryDialog(profile: profile),
     );
-    if (result == true && mounted) await _load();
+    if (result == true && mounted) await _load(silent: true);
   }
 
   String _message(Object error) =>
@@ -493,10 +504,12 @@ class GrowthScreen extends StatefulWidget {
 class _GrowthScreenState extends State<GrowthScreen> {
   late BabyProfile _profile;
   bool _loading = false;
+  GrowthMetric _metric = GrowthMetric.weight;
   @override
   void initState() {
     super.initState();
     _profile = widget.profile;
+    _refresh();
   }
 
   Future<void> _refresh() async {
@@ -563,26 +576,56 @@ class _GrowthScreenState extends State<GrowthScreen> {
           children: [
             if (_loading)
               const LinearProgressIndicator(color: AppColors.primaryDark),
-            if (records.isEmpty)
+            if (records.isEmpty && !_loading)
               const _StateCard(
                 child: Text(
                   'Chưa có mốc tăng trưởng. Hãy ghi nhận số đo đầu tiên của bé.',
                   textAlign: TextAlign.center,
                 ),
               )
-            else ...[
+            else if (records.isNotEmpty) ...[
+              SegmentedButton<GrowthMetric>(
+                segments: const [
+                  ButtonSegment(
+                    value: GrowthMetric.weight,
+                    label: Text('Cân nặng'),
+                  ),
+                  ButtonSegment(
+                    value: GrowthMetric.height,
+                    label: Text('Chiều cao'),
+                  ),
+                ],
+                selected: {_metric},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) =>
+                    setState(() => _metric = selection.first),
+              ),
+              const SizedBox(height: 12),
               _GrowthChart(
-                metric: GrowthMetric.weight,
+                metric: _metric,
                 profile: _profile,
                 records: records,
               ),
-              const SizedBox(height: 16),
-              _GrowthChart(
-                metric: GrowthMetric.height,
-                profile: _profile,
-                records: records,
+            ],
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () async {
+                final saved = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => GrowthEntryDialog(profile: _profile),
+                );
+                if (saved == true && mounted) await _refresh();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Ghi số đo mới'),
+            ),
+            if (records.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              const Text(
+                'Lịch sử số đo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               ...records.reversed.map(
                 (record) => Card(
                   child: ListTile(
@@ -601,18 +644,6 @@ class _GrowthScreenState extends State<GrowthScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: () async {
-                final saved = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => GrowthEntryDialog(profile: _profile),
-                );
-                if (saved == true && mounted) await _refresh();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Ghi số đo mới'),
-            ),
           ],
         ),
       ),
@@ -623,6 +654,8 @@ class _GrowthScreenState extends State<GrowthScreen> {
 class _GrowthChart extends StatelessWidget {
   final GrowthMetric metric;
   final BabyProfile profile;
+
+  /// Đã sắp xếp theo ngày đo tăng dần.
   final List<GrowthRecord> records;
   const _GrowthChart({
     required this.metric,
@@ -630,58 +663,132 @@ class _GrowthChart extends StatelessWidget {
     required this.records,
   });
 
+  /// Thứ tự trong `lineBarsData`: P3, P97, trung vị, bé.
+  static const _babyBarIndex = 3;
+
+  bool get _isWeight => metric == GrowthMetric.weight;
+  String get _unit => _isWeight ? 'kg' : 'cm';
+  double _valueOf(GrowthRecord record) =>
+      _isWeight ? record.weightKg : record.heightCm;
+  String _formatValue(double value) =>
+      '${value == value.roundToDouble() ? value.toInt() : value} $_unit';
+
+  /// Ngày đo trùng ngày sinh có thể lệch vài giờ do múi giờ nên chặn dưới ở 0.
+  double _ageAt(GrowthRecord record) {
+    final age = ageInMonths(profile.dateOfBirth, record.recordedAt);
+    return age < 0 ? 0 : age;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final table = whoTable(metric, profile.isBoy);
+    final latestAge = _ageAt(records.last);
+    final currentAge = ageInMonths(profile.dateOfBirth, DateTime.now());
+    final window = growthChartWindow(
+      latestAge > currentAge ? latestAge : currentAge,
+    );
+    final rows = whoTable(
+      metric,
+      profile.isBoy,
+    ).where((row) => row.month <= window).toList();
+    final plotted = records.where((r) => _ageAt(r) <= window).toList();
+
     final values = [
-      ...table.map((row) => row.p3),
-      ...table.map((row) => row.p97),
-      ...records.map(
-        (record) =>
-            metric == GrowthMetric.weight ? record.weightKg : record.heightCm,
-      ),
+      ...rows.map((row) => row.p3),
+      ...rows.map((row) => row.p97),
+      ...plotted.map(_valueOf),
     ];
-    final step = metric == GrowthMetric.weight ? 2.0 : 10.0;
-    final minY = (values.reduce((a, b) => a < b ? a : b) / step).floor() * step;
-    final maxY = (values.reduce((a, b) => a > b ? a : b) / step).ceil() * step;
-    final spots = records
-        .map(
-          (record) => FlSpot(
-            ageInMonths(profile.dateOfBirth, record.recordedAt).clamp(0, 24),
-            metric == GrowthMetric.weight ? record.weightKg : record.heightCm,
-          ),
-        )
-        .toList();
+    final lowest = values.reduce((a, b) => a < b ? a : b);
+    final highest = values.reduce((a, b) => a > b ? a : b);
+    final step = growthChartStep(highest - lowest);
+
+    const axisStyle = TextStyle(fontSize: 11, color: AppColors.textMuted);
+    LineChartBarData whoBar(
+      double Function(WhoRow) valueOf, {
+      double width = 0,
+      List<int>? dash,
+    }) => LineChartBarData(
+      spots: rows.map((row) => FlSpot(row.month, valueOf(row))).toList(),
+      color: AppColors.secondaryDark,
+      barWidth: width,
+      dashArray: dash,
+      dotData: const FlDotData(show: false),
+    );
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 18, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              metric == GrowthMetric.weight
-                  ? 'Cân nặng theo tuổi'
-                  : 'Chiều cao theo tuổi',
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _isWeight ? 'Cân nặng theo tuổi' : 'Chiều cao theo tuổi',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  _formatValue(_valueOf(records.last)),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             SizedBox(
-              height: 220,
+              height: 240,
               child: LineChart(
                 LineChartData(
                   minX: 0,
-                  maxX: 24,
-                  minY: minY,
-                  maxY: maxY,
-                  gridData: const FlGridData(show: true),
-                  titlesData: const FlTitlesData(
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                  maxX: window,
+                  minY: (lowest / step).floor() * step,
+                  maxY: (highest / step).ceil() * step,
+                  gridData: FlGridData(
+                    drawVerticalLine: false,
+                    horizontalInterval: step,
+                    getDrawingHorizontalLine: (_) =>
+                        const FlLine(color: AppColors.border, strokeWidth: 1),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(),
+                    rightTitles: const AxisTitles(),
+                    leftTitles: AxisTitles(
+                      axisNameSize: 18,
+                      axisNameWidget: Text(_unit, style: axisStyle),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: step,
+                        reservedSize: 28,
+                        getTitlesWidget: (value, _) =>
+                            Text('${value.toInt()}', style: axisStyle),
+                      ),
                     ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                    bottomTitles: AxisTitles(
+                      axisNameSize: 18,
+                      axisNameWidget: const Text(
+                        'Tháng tuổi',
+                        style: axisStyle,
+                      ),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: window / 6,
+                        reservedSize: 22,
+                        getTitlesWidget: (value, _) => Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text('${value.toInt()}', style: axisStyle),
+                        ),
+                      ),
                     ),
                   ),
+                  // Vùng chuẩn nằm giữa hai đường P3 và P97.
                   betweenBarsData: [
                     BetweenBarsData(
                       fromIndex: 0,
@@ -690,58 +797,128 @@ class _GrowthChart extends StatelessWidget {
                     ),
                   ],
                   lineBarsData: [
+                    whoBar((row) => row.p3),
+                    whoBar((row) => row.p97),
+                    whoBar((row) => row.p50, width: 1.5, dash: [5, 4]),
                     LineChartBarData(
-                      spots: table
-                          .map((row) => FlSpot(row.month, row.p3))
+                      spots: plotted
+                          .map((r) => FlSpot(_ageAt(r), _valueOf(r)))
                           .toList(),
-                      isCurved: false,
-                      color: AppColors.secondaryLight,
-                      barWidth: 0,
-                      dotData: const FlDotData(show: false),
-                    ),
-                    LineChartBarData(
-                      spots: table
-                          .map((row) => FlSpot(row.month, row.p97))
-                          .toList(),
-                      isCurved: false,
-                      color: AppColors.secondaryLight,
-                      barWidth: 0,
-                      dotData: const FlDotData(show: false),
-                    ),
-                    LineChartBarData(
-                      spots: table
-                          .map((row) => FlSpot(row.month, row.p50))
-                          .toList(),
-                      isCurved: false,
-                      color: AppColors.secondaryDark,
-                      barWidth: 2,
-                      dashArray: [5, 4],
-                      dotData: const FlDotData(show: false),
-                    ),
-                    LineChartBarData(
-                      spots: spots,
-                      isCurved: false,
                       color: AppColors.primaryDark,
-                      barWidth: 3,
-                      dotData: const FlDotData(show: true),
+                      barWidth: 2.5,
+                      dotData: FlDotData(
+                        getDotPainter: (_, _, _, _) => FlDotCirclePainter(
+                          radius: 4,
+                          color: AppColors.primaryDark,
+                          strokeWidth: 2,
+                          strokeColor: AppColors.white,
+                        ),
+                      ),
                     ),
                   ],
+                  // Chỉ phản hồi khi chạm vào số đo của bé, không hiện thêm
+                  // giá trị của các đường chuẩn.
+                  lineTouchData: LineTouchData(
+                    getTouchedSpotIndicator: (bar, indexes) => indexes
+                        .map(
+                          (_) => bar.dotData.show
+                              ? const TouchedSpotIndicatorData(
+                                  FlLine(
+                                    color: AppColors.textLight,
+                                    strokeWidth: 1,
+                                  ),
+                                  FlDotData(),
+                                )
+                              : null,
+                        )
+                        .toList(),
+                    touchTooltipData: LineTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
+                      getTooltipColor: (_) => AppColors.textDark,
+                      getTooltipItems: (spots) => spots.map((spot) {
+                        if (spot.barIndex != _babyBarIndex) return null;
+                        final record = plotted[spot.spotIndex];
+                        return LineTooltipItem(
+                          '${_formatValue(_valueOf(record))}\n'
+                          '${_formatDate(record.recordedAt.toLocal())}',
+                          const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ),
             ),
-            const Text(
-              'Chuẩn WHO (P3–P97) · Trung vị · Bé',
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            const SizedBox(height: 12),
+            const Wrap(
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                _LegendItem(
+                  color: AppColors.secondaryLight,
+                  label: 'Chuẩn WHO',
+                ),
+                _LegendItem(
+                  color: AppColors.secondaryDark,
+                  label: 'Trung vị',
+                  isLine: true,
+                ),
+                _LegendItem(
+                  color: AppColors.primaryDark,
+                  label: 'Bé',
+                  isLine: true,
+                ),
+              ],
             ),
-            Text(
-              'Trục ngang: tháng tuổi · Trục dọc: ${metric == GrowthMetric.weight ? 'kg' : 'cm'}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textLight),
-            ),
+            if (plotted.length < records.length)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Biểu đồ chuẩn WHO chỉ hiển thị đến 24 tháng tuổi.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
+}
+
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+  final bool isLine;
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    this.isLine = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 16,
+        height: isLine ? 3 : 12,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ),
+      const SizedBox(width: 6),
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+      ),
+    ],
+  );
 }
 
 class GrowthEntryDialog extends StatefulWidget {

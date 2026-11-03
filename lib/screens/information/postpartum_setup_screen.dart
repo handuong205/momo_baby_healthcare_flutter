@@ -69,6 +69,20 @@ class _PostpartumSetupScreenState extends State<PostpartumSetupScreen> {
       } catch (_) {}
 
       if (!hasProfile) {
+        // Backend chấp nhận tên rỗng nên phải chặn ở đây. Cân nặng, chiều dài
+        // không bắt buộc: mẹ có thể bổ sung sau trong màn Bé yêu.
+        if (_babyName.trim().isEmpty) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          await AppResultDialog.showError(
+            context,
+            title: 'Thiếu tên của bé',
+            message: 'Mẹ nhập tên gọi thân mật của bé rồi lưu lại nhé.',
+            buttonText: 'Đóng',
+          );
+          return;
+        }
+
         await PostpartumRepository.saveBabyProfile(
           babyName: _babyName.trim(),
           dateOfBirth: _birthDate,

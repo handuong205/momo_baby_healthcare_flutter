@@ -244,51 +244,25 @@ class PrePregnancyCycleCard extends StatelessWidget {
               children: [
                 _buildMinusButton(),
 
-                Column(
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          '$cycleLength',
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'ngày',
-                          style: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      '$cycleLength',
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-
-                    const SizedBox(height: 2),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.mintLight,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Chu kỳ lý tưởng',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.secondary,
-                        ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'ngày',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -477,55 +451,6 @@ class PrePregnancyCycleCard extends StatelessWidget {
 
               return _buildSymptomChip(symptom: symptom, selected: selected);
             }).toList(),
-          ),
-
-          const SizedBox(height: 12),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.aiPurpleSoft,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.psychology, size: 18, color: AppColors.aiPurple),
-
-                SizedBox(width: 8),
-
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'MomOi AI phân tích:\n',
-                          style: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.aiPurple,
-                          ),
-                        ),
-                        TextSpan(
-                          text:
-                              'Thuật toán sẽ đối chiếu '
-                              'triệu chứng thực tế để cá nhân hóa '
-                              'dự báo cửa sổ rụng trứng.',
-                          style: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 12,
-                            height: 1.4,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

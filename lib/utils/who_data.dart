@@ -95,3 +95,19 @@ String? classifyGrowth(GrowthMetric metric, bool isBoy, double month, double val
 
 double ageInMonths(DateTime dob, DateTime at) =>
     at.difference(dob).inMilliseconds / (30.44 * 24 * 60 * 60 * 1000);
+
+/// Khoảng tháng tuổi cần vẽ: bé nhỏ thì phóng to, số đo không bị dồn vào góc.
+double growthChartWindow(double ageMonths) {
+  for (final window in const [6.0, 12.0, 18.0]) {
+    if (ageMonths <= window) return window;
+  }
+  return 24;
+}
+
+/// Bước chia trục dọc sao cho có khoảng 6 vạch trở xuống.
+double growthChartStep(double range) {
+  for (final step in const [1.0, 2.0, 5.0, 10.0]) {
+    if (range / step <= 6) return step;
+  }
+  return 20;
+}

@@ -22,7 +22,7 @@ class _PrePregnancyScreenState extends State<PrePregnancyScreen> {
 
   int _cycleLength = 28;
 
-  final Set<String> _selectedSymptoms = {'Đau bụng nhẹ 🌸', 'Căng ngực 💧'};
+  final Set<String> _selectedSymptoms = {};
 
   bool _isLoading = false;
 
@@ -368,7 +368,7 @@ class _PrePregnancyScreenState extends State<PrePregnancyScreen> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'MomOi AI đang phân tích...',
+                        'Đang lưu thông tin...',
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 14,

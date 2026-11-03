@@ -334,12 +334,14 @@ class MomField extends StatelessWidget {
     required this.controller,
     this.hint,
     this.multiline = false,
+    this.keyboardType,
   });
 
   final String label;
   final TextEditingController controller;
   final String? hint;
   final bool multiline;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
@@ -356,6 +358,7 @@ class MomField extends StatelessWidget {
           const SizedBox(height: 6),
           TextField(
             controller: controller,
+            keyboardType: keyboardType,
             minLines: multiline ? 3 : 1,
             maxLines: multiline ? 5 : 1,
             style: const TextStyle(color: MomTheme.charcoal, fontSize: 15),

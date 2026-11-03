@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:momo_baby_healthcare_flutter/config/app_config.dart';
 
 import '../exceptions/api_exception.dart';
@@ -40,8 +41,88 @@ class ApiService {
 
           handler.next(options);
         },
+        onError: _retryAfterRefresh,
       ),
     );
+  }
+
+  /// Gọi khi refresh token không còn hợp lệ (đưa người dùng về màn đăng nhập).
+  static VoidCallback? onSessionExpired;
+
+  static Future<Response>? _refreshing;
+
+  /// Đổi refresh token lấy cặp token mới. Backend đổi refresh token sau mỗi lần
+  /// gọi nên các lời gọi đồng thời phải dùng chung một request, nếu không
+  /// request thứ hai sẽ gửi token cũ và làm mẹ bị đăng xuất.
+  static Future<Response> refreshSession() {
+    return _refreshing ??= _requestNewTokens().whenComplete(() {
+      _refreshing = null;
+    });
+  }
+
+  static Future<Response> _requestNewTokens() async {
+    final refreshToken = await TokenService.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw ApiException(message: 'Refresh token không tồn tại');
+    }
+
+    final response = await post(
+      '/api/auth/refresh',
+      data: {'refreshToken': refreshToken},
+      requiresAuth: false,
+    );
+
+    final data = response.data['data'] as Map<String, dynamic>;
+    await TokenService.saveTokens(
+      token: data['token'] as String,
+      refreshToken: data['refreshToken'] as String,
+    );
+
+    return response;
+  }
+
+  /// Access token chỉ sống 15 phút: gặp 401 thì refresh rồi gửi lại request.
+  static Future<void> _retryAfterRefresh(
+    DioException error,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final options = error.requestOptions;
+    final canRetry =
+        error.response?.statusCode == 401 &&
+        options.extra['requiresAuth'] != false &&
+        options.extra['retried'] != true &&
+        !options.path.startsWith('/api/auth/');
+
+    if (!canRetry) {
+      handler.next(error);
+      return;
+    }
+
+    try {
+      await refreshSession();
+    } on ApiException catch (refreshError) {
+      // Mất mạng / lỗi server thì giữ phiên, chỉ thoát khi backend từ chối token.
+      if (refreshError.statusCode == 401) {
+        await TokenService.clearTokens();
+        onSessionExpired?.call();
+      }
+      handler.next(error);
+      return;
+    } catch (_) {
+      handler.next(error);
+      return;
+    }
+
+    try {
+      options.extra['retried'] = true;
+      options.headers['Authorization'] = 'Bearer ${await TokenService.getToken()}';
+      // FormData chỉ đọc được một lần.
+      final body = options.data;
+      if (body is FormData) options.data = body.clone();
+      handler.resolve(await dio.fetch(options));
+    } on DioException catch (retryError) {
+      handler.next(retryError);
+    }
   }
 
   // GET request
